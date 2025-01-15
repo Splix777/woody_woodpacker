@@ -28,7 +28,7 @@ int inject_elf64(t_woody_context *context)
         return ERR_ENCRYPTION;
     if (inject_code(context) != SUCCESS)
         return ERR_INJECTION;
-    if (write_output_file(context) != SUCCESS)
+    if (write_elf(context) != SUCCESS)
         return ERR_FILE_WRITE;
 
     return SUCCESS;

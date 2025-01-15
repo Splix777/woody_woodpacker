@@ -67,6 +67,14 @@ static int validate_header_fields(t_woody_context *context)
     if (context->elf.is_64bit)
     {
         Elf64_Ehdr *ehdr = (Elf64_Ehdr *)context->file.file_buff;
+        if (sizeof(Elf64_Ehdr) > context->file.file_size)
+        {
+            print_verbose(
+                context,
+                "ELF Header Size: %ld, File Size: %ld\n",
+                sizeof(Elf64_Ehdr), context->file.file_size);
+            return ERR_INVALID_ELF;
+        }
         if (ehdr->e_phnum == 0 || ehdr->e_shnum == 0)
         {
             print_verbose(
@@ -104,6 +112,14 @@ static int validate_header_fields(t_woody_context *context)
     else
     {
         Elf32_Ehdr *ehdr = (Elf32_Ehdr *)context->file.file_buff;
+        if (sizeof(Elf32_Ehdr) > context->file.file_size)
+        {
+            print_verbose(
+                context,
+                "ELF Header Size: %d, File Size: %ld\n",
+                sizeof(Elf32_Ehdr), context->file.file_size);
+            return ERR_INVALID_ELF;
+        }
         if (ehdr->e_phnum == 0 || ehdr->e_shnum == 0)
         {
             print_verbose(

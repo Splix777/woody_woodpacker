@@ -104,3 +104,12 @@ int find_text_section_index(t_woody_context *context)
 
     return -1;
 }
+
+// Set Elf Segment Permissions
+void set_elf_segment_permission(t_woody_context *context, int index, int flags)
+{
+    if (context->elf.is_64bit)
+        context->elf.elf64.phdr[index].p_flags |= flags;
+    else
+        context->elf.elf32.phdr[index].p_flags |= flags;
+}

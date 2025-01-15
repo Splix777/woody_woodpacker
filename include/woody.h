@@ -47,14 +47,14 @@ typedef struct s_cave32
 
 typedef struct s_elf64
 {
-    Elf64_Ehdr *ehdr;
-    Elf64_Phdr *phdr;
-    Elf64_Shdr *shdr;
+    Elf64_Ehdr *ehdr; // ELF Header
+    Elf64_Phdr *phdr; // Program Header
+    Elf64_Shdr *shdr; // Section Header
 
-    char **section_data;
-    uint64_t old_entry;
-    uint64_t text_data_size;
-    uint64_t text_data_entry;
+    char **section_data; // Section data (Actual data in the sections)
+    uint64_t old_entry;  // Original entry point (e_entry)
+    uint64_t text_size;  // Size of the .text section
+    uint64_t text_entry; // Entry point of the .text section
 } t_elf64;
 
 typedef struct s_elf32
@@ -65,8 +65,8 @@ typedef struct s_elf32
 
     char **section_data;
     uint32_t old_entry;
-    uint32_t text_data_size;
-    uint32_t text_data_entry;
+    uint32_t text_size;
+    uint32_t text_entry;
 } t_elf32;
 
 // Main Context Structure (Shuttle for all data)
@@ -116,8 +116,12 @@ typedef struct s_woody_context
 // Context utility
 int argument_parse(int argc, char **argv, t_woody_context *context);
 int import_context_data(t_woody_context *context);
-int write_output_file(t_woody_context *context);
 int initialize_struct(t_woody_context *context);
+
+// File utility
+int write_to_file(int fd, void *data, size_t data_size);
+void add_zero_padding(int fd, size_t end_offset);
+int write_elf(t_woody_context *context);
 
 // Header validation
 int validate_headers(t_woody_context *context);
@@ -134,6 +138,7 @@ int find_elf_segment_index_by_section(t_woody_context *context, int section_inde
 char *find_elf_section_name(t_woody_context *context, int index);
 int find_elf_section_index(t_woody_context *context, char *name);
 int find_text_section_index(t_woody_context *context);
+void set_elf_segment_permission(t_woody_context *context, int index, int flags);
 
 // Payload
 unsigned char *prepare_payload(t_woody_context *context);
@@ -153,6 +158,6 @@ void print_verbose(t_woody_context *context, const char *format, ...);
 // Encryption
 int generate_key(t_woody_context *context);
 int encrypt_text_section(t_woody_context *context);
-void encrypt(char *data, size_t size, unsigned char *key);
+int encrypt(char *data, size_t size, unsigned char *key);
 
 #endif // WOODY_H

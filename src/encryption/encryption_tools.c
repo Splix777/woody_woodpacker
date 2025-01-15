@@ -41,13 +41,20 @@ int generate_key(t_woody_context *context)
         memcpy(key, context->encryption.key, XOR_KEY_SIZE);
     }
     else if (!generate_crypto_random_bytes(key, XOR_KEY_SIZE))
+    {
+        print_verbose(context, "Failed to generate random key\n");
         return ERR_ENCRYPTION;
+    }
 
     context->encryption.key = malloc(XOR_KEY_SIZE);
     if (!context->encryption.key)
         return ERR_MEMORY_ALLOC;
 
     memcpy(context->encryption.key, key, XOR_KEY_SIZE);
+    print_verbose(context, "Generated XOR key: ");
+    for (size_t i = 0; i < XOR_KEY_SIZE; i++)
+        print_verbose(context, "%02x", context->encryption.key[i]);
+    print_verbose(context, "\n");
 
     return SUCCESS;
 }
@@ -55,26 +62,48 @@ int generate_key(t_woody_context *context)
 // Encrypt the text section using the XOR key
 int encrypt_text_section(t_woody_context *context)
 {
-    int text_section_index = find_elf_section_index(context, ".text");
-    if (text_section_index < 0)
+    int text_index = find_elf_section_index(context, ".text");
+    if (text_index < 0)
+    {
+        print_verbose(context, "Failed to find .text section to encrypt\n");
         return ERR_ENCRYPTION;
+    }
+    print_verbose(context, "Encrypting .text section %d\n", text_index);
 
     char *text_data;
     if (context->elf.is_64bit)
     {
-        text_data = (char *)context->elf.elf64.section_data[text_section_index];
+        text_data = (char *)context->elf.elf64.section_data[text_index];
 
-        context->elf.elf64.text_data_entry = context->elf.elf64.shdr[text_section_index].sh_addr;
-        context->elf.elf64.text_data_size = context->elf.elf64.shdr[text_section_index].sh_size;
+        context->elf.elf64.text_entry = context->elf.elf64.shdr[text_index].sh_addr;
+        context->elf.elf64.text_size = context->elf.elf64.shdr[text_index].sh_size;
 
         if (generate_key(context) != SUCCESS)
             return ERR_ENCRYPTION;
 
-        encrypt(
-            text_data,
-            context->elf.elf64.text_data_size,
-            context->encryption.key);
+        if (encrypt(
+                (char *)context->elf.elf64.section_data[text_index],
+                context->elf.elf64.text_size,
+                context->encryption.key) != 0)
+            return ERR_ENCRYPTION;
     }
+    else
+    {
+        text_data = (char *)context->elf.elf32.section_data[text_index];
+
+        context->elf.elf32.text_entry = context->elf.elf32.shdr[text_index].sh_addr;
+        context->elf.elf32.text_size = context->elf.elf32.shdr[text_index].sh_size;
+
+        if (generate_key(context) != SUCCESS)
+            return ERR_ENCRYPTION;
+
+        if (encrypt(
+                text_data,
+                context->elf.elf32.text_size,
+                context->encryption.key) != 0)
+            return ERR_ENCRYPTION;
+    }
+    print_verbose(context, "Encrypted .text section\n");
 
     return SUCCESS;
 }

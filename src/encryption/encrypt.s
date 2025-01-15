@@ -34,6 +34,7 @@ key_index_ok:
     jmp encrypt_loop        ; Repeat loop
 
 encrypt_done:
+    xor rax, rax            ; Clear rax
     ret
 
 section .note.GNU-stack noalloc noexec nowrite progbits

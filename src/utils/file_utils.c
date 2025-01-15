@@ -1,5 +1,8 @@
 #include "woody.h"
 
+// To keep track of the bytes written for the padding
+size_t offset = 0;
+
 static int open_file(const char *file_path, int flags, int mode)
 {
     int fd = open(file_path, flags, mode);
@@ -87,7 +90,7 @@ static int open_files(t_woody_context *context)
     context->file.output_fd = open_file(
         context->file.output_file_path,
         O_RDWR | O_CREAT | O_TRUNC,
-        0644);
+        0755);
     if (context->file.output_fd < 0)
     {
         print_verbose(context, "Error opening output file: %s\n", context->file.output_file_path);
@@ -98,51 +101,23 @@ static int open_files(t_woody_context *context)
     return SUCCESS;
 }
 
-int write_output_file(t_woody_context *context)
+int write_to_file(int fd, void *data, size_t data_size)
 {
-    // We will write the output file from our struct.
-    // First we will write the ELF header, then the program header table, then the section header table, and finally the section data.
+    size_t n_bytes;
+    if ((n_bytes = write(fd, data, data_size)) != data_size)
+        return -1;
+    offset += n_bytes;
 
-    // Write the ELF header
-    size_t written = write(context->file.output_fd, context->elf.elf64.ehdr, sizeof(Elf64_Ehdr));
-    if (written != sizeof(Elf64_Ehdr))
+    return 1;
+}
+
+void add_zero_padding(int fd, size_t end_offset)
+{
+    char c = 0;
+    while (offset < end_offset)
     {
-        print_verbose(context, "Failed to write ELF header\n");
-        return ERR_FILE_WRITE;
+        write_to_file(fd, &c, sizeof(c));
     }
-
-    // Write the program header table
-    written = write(context->file.output_fd, context->elf.elf64.phdr, sizeof(Elf64_Phdr) * context->elf.elf64.ehdr->e_phnum);
-    if (written != sizeof(Elf64_Phdr) * context->elf.elf64.ehdr->e_phnum)
-    {
-        print_verbose(context, "Failed to write program header table\n");
-        return ERR_FILE_WRITE;
-    }
-
-    // Write the section data
-    for (size_t i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
-    {
-        if (context->elf.elf64.section_data[i] == NULL)
-            continue;
-
-        written = write(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size);
-        if (written != context->elf.elf64.shdr[i].sh_size)
-        {
-            print_verbose(context, "Failed to write section data for section %ld\n", i);
-            return ERR_FILE_WRITE;
-        }
-    }
-
-    // Write the section header table
-    written = write(context->file.output_fd, context->elf.elf64.shdr, sizeof(Elf64_Shdr) * context->elf.elf64.ehdr->e_shnum);
-    if (written != sizeof(Elf64_Shdr) * context->elf.elf64.ehdr->e_shnum)
-    {
-        print_verbose(context, "Failed to write section header table\n");
-        return ERR_FILE_WRITE;
-    }
-
-
-    return SUCCESS;
 }
 
 int import_context_data(t_woody_context *context)
@@ -153,6 +128,45 @@ int import_context_data(t_woody_context *context)
         return ret;
     if ((ret = load_files_to_memory(context) != SUCCESS))
         return ret;
+
+    return SUCCESS;
+}
+
+int write_elf(t_woody_context *context)
+{
+    if (context->elf.is_64bit)
+    {
+        print_verbose(context, "Writing 64-bit ELF\n");
+        write_to_file(context->file.output_fd, context->elf.elf64.ehdr, sizeof(Elf64_Ehdr));
+        add_zero_padding(context->file.output_fd, context->elf.elf64.ehdr->e_phoff);
+
+        print_verbose(context, "Writing 64-bit ELF Program Headers\n");
+        write_to_file(context->file.output_fd, context->elf.elf64.phdr, context->elf.elf64.ehdr->e_phnum * sizeof(Elf64_Phdr));
+
+        print_verbose(context, "Writing 64-bit ELF Section Data\n");
+        for (size_t i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
+        {
+            if (context->elf.elf64.shdr[i].sh_type != SHT_NOBITS)
+            {
+                add_zero_padding(context->file.output_fd, context->elf.elf64.shdr[i].sh_offset);
+                if (i == (size_t)context->injection.cave64.section_index)
+                {
+                    write_to_file(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_SIZE);
+                }
+                else
+                {
+                    write_to_file(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size);
+                }
+            }
+        }
+        add_zero_padding(context->file.output_fd, context->elf.elf64.ehdr->e_shoff);
+
+        print_verbose(context, "Writing 64-bit ELF Section Headers\n");
+        for (size_t i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
+        {
+            write_to_file(context->file.output_fd, context->elf.elf64.shdr + i, sizeof(Elf64_Shdr));
+        }
+    }
 
     return SUCCESS;
 }

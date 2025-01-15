@@ -16,7 +16,7 @@ INJECT_DIR = $(SRC_DIR)/code_to_inject
 # Source files
 C_SRCS = $(filter-out $(INJECT_DIR)/payload.c, $(shell find $(SRC_DIR) -type f -name '*.c'))
 ASM_SRCS = $(SRC_DIR)/encryption/encrypt.s
-INJECT_ASM = $(INJECT_DIR)/woody_injection.s
+INJECT_ASM = $(INJECT_DIR)/amd64_xor.s
 INJECT_PAYLOAD = $(INJECT_DIR)/payload.c
 
 # Headers
@@ -81,6 +81,13 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) $< -o $@
 	@echo "[\033[32m OK \033[0m]"
+
+# Compile Injected code as standalone
+standalone: $(INJECT_OBJ) $(PAYLOAD_OBJ)
+	@printf "Linking %-40s" "woody"
+	@$(CC) $(CFLAGS) -o woody $(INJECT_OBJ) $(PAYLOAD_OBJ)
+	@echo "[\033[32m OK \033[0m]"
+	@echo "Binary size: $$(wc -c < woody) bytes"
 
 # Clean object files
 clean:
