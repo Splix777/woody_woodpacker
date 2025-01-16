@@ -29,22 +29,6 @@
 // Code cave alignment
 #define CODE_CAVE_ALIGNMENT 8
 
-typedef struct s_cave64
-{
-    Elf64_Addr addr;   // Address of the code cave
-    Elf64_Off offset;  // Offset of the code cave
-    Elf64_Xword size;  // Size of the code
-    int section_index; // Index of the segment we are injecting into
-} t_cave64;
-
-typedef struct s_cave32
-{
-    Elf32_Addr addr;   // Address of the code cave
-    Elf32_Off offset;  // Offset of the code cave
-    Elf32_Word size;   // Size of the code
-    int section_index; // Index of the segment we are injecting into
-} t_cave32;
-
 typedef struct s_elf64
 {
     Elf64_Ehdr *ehdr; // ELF Header
@@ -52,9 +36,12 @@ typedef struct s_elf64
     Elf64_Shdr *shdr; // Section Header
 
     char **section_data; // Section data (Actual data in the sections)
-    uint64_t old_entry;  // Original entry point (e_entry)
-    uint64_t text_size;  // Size of the .text section
-    uint64_t text_entry; // Entry point of the .text section
+    // Injection Data
+    uint64_t cave_index;  // Code cave index
+    uint64_t old_entry;   // Original entry point (e_entry)
+    uint64_t text_size;   // Size of the .text section
+    uint64_t text_entry;  // Entry point of the .text section
+    uint64_t text_offset; // Offset of the .text section
 } t_elf64;
 
 typedef struct s_elf32
@@ -64,9 +51,12 @@ typedef struct s_elf32
     Elf32_Shdr *shdr;
 
     char **section_data;
+    // Injection Data
+    uint32_t cave_index;
     uint32_t old_entry;
     uint32_t text_size;
     uint32_t text_entry;
+    uint32_t text_offset;
 } t_elf32;
 
 // Main Context Structure (Shuttle for all data)
@@ -96,14 +86,13 @@ typedef struct s_woody_context
     {
         const char *payload; // Payload to inject
         size_t payload_size; // Size of the payload
-        t_cave64 cave64;     // Code cave for 64-bit ELF
-        t_cave32 cave32;     // Code cave for 32-bit ELF
     } injection;
 
     // Encryption
     struct
     {
-        unsigned char *key; // XOR Key
+        uint64_t key64; // XOR key
+        uint32_t key32; // XOR key
     } encryption;
 
     // State and metadata
@@ -119,8 +108,6 @@ int import_context_data(t_woody_context *context);
 int initialize_struct(t_woody_context *context);
 
 // File utility
-int write_to_file(int fd, void *data, size_t data_size);
-void add_zero_padding(int fd, size_t end_offset);
 int write_elf(t_woody_context *context);
 
 // Header validation
@@ -141,7 +128,7 @@ int find_text_section_index(t_woody_context *context);
 void set_elf_segment_permission(t_woody_context *context, int index, int flags);
 
 // Payload
-unsigned char *prepare_payload(t_woody_context *context);
+char *prepare_payload(t_woody_context *context);
 
 // Error
 void print_error(t_error_code code);
@@ -156,8 +143,8 @@ void print_woody_context(t_woody_context *context);
 void print_verbose(t_woody_context *context, const char *format, ...);
 
 // Encryption
-int generate_key(t_woody_context *context);
+// int generate_key(t_woody_context *context);
+// int encrypt(char *data, size_t size, unsigned char *key);
 int encrypt_text_section(t_woody_context *context);
-int encrypt(char *data, size_t size, unsigned char *key);
 
 #endif // WOODY_H

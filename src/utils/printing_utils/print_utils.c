@@ -96,12 +96,22 @@ static void print_section_data(t_woody_context *context)
     {
         for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
         {
-            Elf64_Shdr *shdr = context->elf.elf64.shdr + i;
-            printf("  %s:\n", find_elf_section_name(context, i));
-            printf("    Data: ");
-            for (unsigned int j = 0; j < shdr->sh_size; j++)
-                printf("%02x", (unsigned char)context->elf.elf64.section_data[i][j]);
-            printf("\n");
+            if (context->elf.elf64.shdr[i].sh_type != SHT_NOBITS)
+            {
+                printf("  %s:\n", find_elf_section_name(context, i));
+                printf("    Data: ");
+                if (i == (size_t)context->elf.elf64.cave_index)
+                {
+                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_SIZE; j++)
+                        printf("%02x", (unsigned char)context->elf.elf64.section_data[i][j]);
+                }
+                else
+                {
+                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size; j++)
+                        printf("%02x", (unsigned char)context->elf.elf64.section_data[i][j]);
+                }
+                printf("\n");
+            }
         }
     }
     else
@@ -220,13 +230,20 @@ void print_woody_context(t_woody_context *context)
     print_section_data(context);
 
     // Injection Information
-    if (context->encryption.key)
-    {
-        printf("Encryption Key: ");
-        for (size_t i = 0; i < XOR_KEY_SIZE; i++)
-            printf("%02x", context->encryption.key[i]);
-        printf("\n");
-    }
+    // if (context->encryption.key64)
+    // {
+    //     printf("Encryption Key: ");
+    //     for (size_t i = 0; i < XOR_KEY_SIZE; i++)
+    //         printf("%02x", context->encryption.key64[i]);
+    //     printf("\n");
+    // }
+    // else
+    // {
+    //     printf("Encryption Key: ");
+    //     for (size_t i = 0; i < XOR_KEY_SIZE; i++)
+    //         printf("%02x", context->encryption.key32[i]);
+    //     printf("\n");
+    // }
 
     // Encryption Information
     printf("Compression Enabled: %s\n", context->compression ? "true" : "false");

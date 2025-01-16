@@ -95,8 +95,8 @@ int argument_parse(int argc, char **argv, t_woody_context *context)
             }
             if ((ret = valid_key(argv[i + 1], XOR_KEY_SIZE) != SUCCESS))
                 return ERR_INVALID_ARGS;
-            context->encryption.key = (unsigned char *)argv[i + 1];
-            print_verbose(context, "Encryption key: %s\n", context->encryption.key);
+            // context->encryption.key64 = argv[i + 1];
+            // print_verbose(context, "Encryption key: %s\n", context->encryption.key64);
             i++;
         }
         else if (strcmp(argv[i], "-c") == 0)

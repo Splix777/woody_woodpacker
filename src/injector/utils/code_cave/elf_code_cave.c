@@ -15,7 +15,8 @@ static int find_elf_code_cave_index(t_woody_context *context)
             if (i == (context->elf.elf64.ehdr->e_shnum - 1))
             {
                 cave_size = context->elf.elf64.ehdr->e_shoff -
-                            (context->elf.elf64.shdr[i].sh_offset + context->elf.elf64.shdr[i].sh_size);
+                            (context->elf.elf64.shdr[i].sh_offset +
+                             context->elf.elf64.shdr[i].sh_size);
             }
             else
             {
@@ -125,21 +126,21 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
 static int cave_insert_payload(t_woody_context *context, int section_index, unsigned int old_section_size)
 {
     char *new_section_data;
-    unsigned char *payload;
-    size_t alignment;
+    char *payload;
+    // size_t alignment;
 
     if (context->elf.is_64bit)
     {
         // Get section alignment
-        alignment = context->elf.elf64.shdr[section_index].sh_addralign;
+        // alignment = context->elf.elf64.shdr[section_index].sh_addralign;
         size_t new_size = old_section_size + INJECTION_PAYLOAD_SIZE;
 
         // Align the new size if needed
-        if (alignment > 0)
-        {
-            print_verbose(context, "Aligning new section size to %ld\n", alignment);
-            new_size = (new_size + alignment - 1) & ~(alignment - 1);
-        }
+        // if (alignment > 0)
+        // {
+        //     print_verbose(context, "Aligning new section size to %ld\n", alignment);
+        //     new_size = (new_size + alignment - 1) & ~(alignment - 1);
+        // }
 
         new_section_data = realloc(context->elf.elf64.section_data[section_index], new_size);
         if (new_section_data == NULL)
@@ -149,8 +150,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, unsi
         }
 
         context->elf.elf64.section_data[section_index] = new_section_data;
-
-        context->injection.cave64.offset = context->elf.elf64.shdr[section_index].sh_offset + old_section_size;
+        context->elf.elf64.text_offset = context->elf.elf64.shdr[section_index].sh_addr + old_section_size;
 
         // Prepare and insert payload
         payload = prepare_payload(context);
@@ -164,15 +164,15 @@ static int cave_insert_payload(t_woody_context *context, int section_index, unsi
     else
     {
         // Get section alignment
-        alignment = context->elf.elf32.shdr[section_index].sh_addralign;
+        // alignment = context->elf.elf32.shdr[section_index].sh_addralign;
         size_t new_size = old_section_size + INJECTION_PAYLOAD_SIZE;
 
         // Align the new size if needed
-        if (alignment > 0)
-        {
-            print_verbose(context, "Aligning new section size to %ld\n", alignment);
-            new_size = (new_size + alignment - 1) & ~(alignment - 1);
-        }
+        // if (alignment > 0)
+        // {
+        //     print_verbose(context, "Aligning new section size to %ld\n", alignment);
+        //     new_size = (new_size + alignment - 1) & ~(alignment - 1);
+        // }
 
         new_section_data = realloc(context->elf.elf32.section_data[section_index], new_size);
         if (new_section_data == NULL)
@@ -182,6 +182,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, unsi
         }
 
         context->elf.elf32.section_data[section_index] = new_section_data;
+        context->elf.elf32.text_offset = context->elf.elf32.shdr[section_index].sh_addr + old_section_size;
 
         // Prepare and insert payload
         payload = prepare_payload(context);
@@ -203,9 +204,9 @@ int find_code_cave(t_woody_context *context)
         return NO_CODE_CAVE;
 
     if (context->elf.is_64bit)
-        context->injection.cave64.section_index = section_cave_index;
+        context->elf.elf64.cave_index = section_cave_index;
     else
-        context->injection.cave32.section_index = section_cave_index;
+        context->elf.elf32.cave_index = section_cave_index;
 
     int segment_cave_index = find_elf_segment_index_by_section(context, section_cave_index);
     if (segment_cave_index == -1)
@@ -215,7 +216,7 @@ int find_code_cave(t_woody_context *context)
         return NO_CODE_CAVE;
 
     //
-    unsigned int old_section_size;
+    int old_section_size;
     if (context->elf.is_64bit)
         old_section_size = context->elf.elf64.shdr[section_cave_index].sh_size;
     else
@@ -226,7 +227,14 @@ int find_code_cave(t_woody_context *context)
 
     if (context->elf.is_64bit)
     {
-        context->elf.elf64.ehdr->e_entry = context->elf.elf64.shdr[section_cave_index].sh_addr + old_section_size;
+        Elf64_Addr new_entry;
+        new_entry = context->elf.elf64.shdr[section_cave_index].sh_addr + old_section_size;
+        //
+        Elf64_Addr old_entry = context->elf.elf64.ehdr->e_entry;
+        context->elf.elf64.ehdr->e_entry = new_entry;
+        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+
+        memcpy(context->elf.elf64.section_data[section_cave_index] + old_section_size + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
     }
 
     return SUCCESS;

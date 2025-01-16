@@ -47,8 +47,5 @@ void cleanup_context(t_woody_context *context)
         context->error_code != SUCCESS)
         remove(context->file.output_file_path);
 
-    if (context->encryption.key)
-        free(context->encryption.key);
-
     memset(context, 0, sizeof(t_woody_context));
 }

@@ -1,4 +1,4 @@
-BITS 64
+bits 64
 
 %macro pushx 1-*
  %rep %0
@@ -17,52 +17,50 @@ BITS 64
 section .text
 
 loader_entry_point:
-    pushfq
-    pushx rax, rdi, rsi, rsp, rdx, rcx
+	pushfq
+	pushx rax, rdi, rsi, rsp, rdx, rcx
 
     ; syscall : rax
     ; parameter order : rdi, rsi, rdx, r10, r8, r9
     ; sys_write
-    mov rax, 1
-    mov rdi, rax
-    lea rsi, [rel msg]
-    mov rdx, msg_len
-    syscall
+  mov rax, 1
+	mov	rdi, rax
+	lea	rsi, [rel msg]
+	mov	rdx, msg_len
+	syscall
 
     ; We save pie offset
-    lea r12, [rel loader_entry_point]
-    sub r12, [rel info_offset]
+  lea r12, [rel loader_entry_point]
+  sub r12, [rel info_offset]
 
-    jmp start_unpacking
+	jmp	start_unpacking
 
-msg db "....Woody....", 13, 0
-msg_len equ $ - msg
+msg	db	"....Woody....", 10, 0
+msg_len	equ	$ - msg
 
 start_unpacking:
-    mov rax, [rel info_addr]
-    mov rcx, [rel info_size]
-    mov rdx, [rel info_key]
+	mov	rax, [rel info_addr]
+	mov	rcx, [rel info_size]
+	mov	rdx, [rel info_key]
 
     ; We add PIE offset
-    add rax, r12
-    add rcx, rax
+	add rax, r12
+	add	rcx, rax
 
 .loop:
-    xor byte [rax], dl
-    ror rdx, 8
-    inc rax
-    cmp rax, rcx
-    jnz .loop
+	xor	byte [rax], dl
+	ror	rdx, 8
+	inc	rax
+	cmp	rax, rcx
+	jnz	.loop
 
-    popx rax, rdi, rsi, rsp, rdx, rcx
-    popfq
-    ; jmp 0xFFFFFFFF
-    ; jmp to old entry point
-    jmp [rel inf_old_entry]
+	popx rax, rdi, rsi, rsp, rdx, rcx
+	popfq
+	jmp	0xFFFFFFFF
 
+; random values here, to be patched
 info_start:
-info_key:      times 32 db 0xaa  ; 32-byte key placeholder
-info_addr:     dq 0xbbbbbbbbbbbbbbbb
-info_size:     dq 0xcccccccccccccccc
-info_offset:   dq 0xdddddddddddddddd
-inf_old_entry: dq 0xeeeeeeeeeeeeeeee
+info_key:	    dq	0xaaaaaaaaaaaaaaaa
+info_addr:	    dq	0xbbbbbbbbbbbbbbbb
+info_size:	    dq  0xcccccccccccccccc
+info_offset:    dq  0xdddddddddddddddd
