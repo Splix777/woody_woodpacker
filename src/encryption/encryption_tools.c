@@ -47,18 +47,17 @@ static int generate_key(t_woody_context *context)
 
 static uint64_t rotate_right(uint64_t value)
 {
-    uint64_t n_rotations = 1; // Changed to rotate by 1 bit at a time
+    uint64_t n_rotations = 1;
     uint64_t int_bits = sizeof(uint64_t) * 8;
     return (value >> n_rotations) | (value << (int_bits - n_rotations));
 }
 
 static int xor_encrypt64(char *data, size_t size, uint64_t key)
 {
-    uint64_t current_key = key;
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < (int)size; i++)
     {
-        data[i] ^= (char)current_key;
-        current_key = rotate_right(current_key);
+        data[i] = (char)data[i] ^ key;
+        key = rotate_right(key);
     }
     return 0;
 }
@@ -92,6 +91,11 @@ int encrypt_text_section(t_woody_context *context)
                           context->elf.elf64.text_size,
                           context->encryption.key64) != 0)
             return ERR_ENCRYPTION;
+
+        // if (xor_encrypt64(text_data,
+        //                   context->elf.elf64.text_size,
+        //                   context->encryption.key64) != 0)
+        //     return ERR_ENCRYPTION;
 
         print_verbose(context, ".text after encryption: ");
         for (size_t i = 0; i < context->elf.elf64.shdr[text_index].sh_size; i++)

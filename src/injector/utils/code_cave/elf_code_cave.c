@@ -107,17 +107,18 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
         "Setting segment %d permissions to RWX\n",
         segment_index);
     // In the case the cave is not in a segment with RWX permissions.
-    set_elf_segment_permission(context, segment_index, PF_X | PF_W | PF_R);
+    set_elf_segment_permission(context, segment_index, PF_X);
+    set_elf_segment_permission(context, segment_index, PF_W);
 
-    // int text_segment_index = find_text_section_index(context);
-    // if (text_segment_index == -1)
-    //     return -1;
+    int text_segment_index = find_text_section_index(context);
+    if (text_segment_index == -1)
+        return -1;
 
-    // print_verbose(
-    //     context,
-    //     "Setting text segment %d permissions to RWX\n",
-    //     text_segment_index);
-    // set_elf_segment_permission(context, text_segment_index, PF_X | PF_W | PF_R);
+    print_verbose(
+        context,
+        "Setting text segment %d permissions to RWX\n",
+        text_segment_index);
+    set_elf_segment_permission(context, text_segment_index, PF_W);
 
     return SUCCESS;
 }
@@ -235,6 +236,15 @@ int find_code_cave(t_woody_context *context)
         int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
 
         memcpy(context->elf.elf64.section_data[section_cave_index] + old_section_size + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+
+        print_verbose(context, "Old entry point: %lx\n", old_entry);
+        print_verbose(context, "New entry point: %lx\n", new_entry);
+        print_verbose(context, "Jump: %lx\n", (unsigned long)jump);
+        print_verbose(context, "Fully injected payload:\n");
+        for (size_t i = 0; i < INJECTION_PAYLOAD_SIZE; i++)
+            print_verbose(context, "%02x", (unsigned char)context->elf.elf64.section_data[section_cave_index][old_section_size + i]);
+        print_verbose(context, "\n");
+
     }
 
     return SUCCESS;

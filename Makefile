@@ -4,7 +4,7 @@ NAME = woody_woodpacker
 # Compiler and flags
 CC = gcc
 AS = nasm
-CFLAGS = -Wall -Wextra -Werror -g -O2 -pie
+CFLAGS = -Wall -Wextra -Werror -g3 -O2 -pie
 ASFLAGS = -f elf64
 
 # Directories
@@ -55,7 +55,7 @@ $(OBJ_DIR):
 # Build injection object file
 $(INJECT_OBJ): $(INJECT_ASM)
 	@printf "Assembling %-40s" "$(notdir $<)"
-	@$(AS) -w[+-]error=x -f bin  -o $@ $<
+	@$(AS) -w[+-]error=x -g -f bin -o $@ $<
 	@echo "[\033[32m OK \033[0m]"
 	@echo "Injection size: $$(wc -c < $@) bytes"
 
