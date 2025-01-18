@@ -48,14 +48,15 @@ start_unpacking:
 	add	rcx, rax
 
 .loop:
-	; xor	byte [rax], dl
-	; ror	rdx, 8
-	; inc	rax
-	; cmp	rax, rcx
-	; jnz	.loop
+	xor	byte [rax], dl
+	ror	rdx, 8
+	inc	rax
+	cmp	rax, rcx
+	jnz	.loop
 
 	popx rax, rdi, rsi, rsp, rdx, rcx
 	popfq
+
 	jmp	0xFFFFFFFF
 
 ; random values here, to be patched

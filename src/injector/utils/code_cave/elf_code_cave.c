@@ -166,7 +166,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
     {
         // Get section alignment
         // alignment = context->elf.elf32.shdr[section_index].sh_addralign;
-        size_t new_size = old_section_size + INJECTION_PAYLOAD_SIZE;
+        // size_t new_size = old_section_size + INJECTION_PAYLOAD_SIZE;
 
         // Align the new size if needed
         // if (alignment > 0)
@@ -175,7 +175,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
         //     new_size = (new_size + alignment - 1) & ~(alignment - 1);
         // }
 
-        new_section_data = realloc(context->elf.elf32.section_data[section_index], new_size);
+        new_section_data = realloc(context->elf.elf32.section_data[section_index], old_section_size + INJECTION_PAYLOAD_SIZE);
         if (new_section_data == NULL)
         {
             print_verbose(context, "Failed to reallocate memory for new section data\n");

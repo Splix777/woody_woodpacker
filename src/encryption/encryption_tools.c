@@ -2,30 +2,30 @@
 #include <time.h>
 
 // Helper function to generate cryptographically secure random bytes using /dev/urandom
-static uint64_t produce64BitKey(void)
-{
-    uint64_t key = 0;
+// static uint64_t produce64BitKey(void)
+// {
+//     uint64_t key = 0;
 
-    // Generate a random key
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd < 0)
-    {
-        print_verbose(NULL, "Cannot open /dev/urandom\n");
-        return 0;
-    }
+//     // Generate a random key
+//     int fd = open("/dev/urandom", O_RDONLY);
+//     if (fd < 0)
+//     {
+//         print_verbose(NULL, "Cannot open /dev/urandom\n");
+//         return 0;
+//     }
 
-    // Read exactly 8 bytes (sizeof uint64_t)
-    ssize_t bytes_read = read(fd, &key, sizeof(key));
-    if (bytes_read != sizeof(key))
-    {
-        print_verbose(NULL, "Failed to read from /dev/urandom\n");
-        close(fd);
-        return 0;
-    }
+//     // Read exactly 8 bytes (sizeof uint64_t)
+//     ssize_t bytes_read = read(fd, &key, sizeof(key));
+//     if (bytes_read != sizeof(key))
+//     {
+//         print_verbose(NULL, "Failed to read from /dev/urandom\n");
+//         close(fd);
+//         return 0;
+//     }
 
-    close(fd);
-    return key;
-}
+//     close(fd);
+//     return key;
+// }
 
 static uint64_t produce64BitKey(void)
 {
@@ -56,7 +56,7 @@ static int generate_key(t_woody_context *context)
 
 static uint64_t rotate_right(uint64_t value)
 {
-    uint64_t n_rotations = 1;
+    uint64_t n_rotations = sizeof(uint64_t);
     uint64_t int_bits = sizeof(uint64_t) * 8;
     return (value >> n_rotations) | (value << (int_bits - n_rotations));
 }
@@ -101,10 +101,10 @@ int encrypt_text_section(t_woody_context *context)
                           context->encryption.key64) != 0)
             return ERR_ENCRYPTION;
 
-        if (xor_encrypt64(text_data,
-                          context->elf.elf64.text_size,
-                          context->encryption.key64) != 0)
-            return ERR_ENCRYPTION;
+        // if (xor_encrypt64(text_data,
+        //                   context->elf.elf64.text_size,
+        //                   context->encryption.key64) != 0)
+        //     return ERR_ENCRYPTION;
 
         print_verbose(context, ".text after encryption: ");
         for (size_t i = 0; i < context->elf.elf64.shdr[text_index].sh_size; i++)
