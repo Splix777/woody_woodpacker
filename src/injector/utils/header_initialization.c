@@ -139,7 +139,7 @@ static int allocate_section_data(t_woody_context *context)
         memset(context->elf.elf64.section_data, 0, sizeof(char *) * context->elf.elf64.ehdr->e_shnum);
 
         size_t elf_section_data_size;
-        for (size_t i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
+        for (int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
         {
             Elf64_Shdr *shdr = context->elf.elf64.shdr + i;
             // SHT_NOBITS sections dont occupy space in the file

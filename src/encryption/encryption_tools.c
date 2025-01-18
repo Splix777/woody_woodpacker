@@ -1,7 +1,8 @@
 #include "woody.h"
+#include <time.h>
 
 // Helper function to generate cryptographically secure random bytes using /dev/urandom
-static uint64_t generate64_key(void)
+static uint64_t produce64BitKey(void)
 {
     uint64_t key = 0;
 
@@ -26,13 +27,21 @@ static uint64_t generate64_key(void)
     return key;
 }
 
+static uint64_t produce64BitKey(void)
+{
+    // Note: rand() is not a really good pRNG generator but that should be ok in our case
+    srand(time(NULL));     // NOLINT(cert-msc32-c,cert-msc51-cpp)
+    uint64_t key = rand(); // NOLINT(cert-msc30-c,cert-msc50-cpp)
+    return key;
+}
+
 // Generate the XOR key
 static int generate_key(t_woody_context *context)
 {
     if (context->elf.is_64bit)
     {
         // Assuming context->encryption.key64 is uint64_t (not uint64_t*)
-        context->encryption.key64 = generate64_key();
+        context->encryption.key64 = produce64BitKey();
         if (!context->encryption.key64)
             return ERR_ENCRYPTION;
 
@@ -92,10 +101,10 @@ int encrypt_text_section(t_woody_context *context)
                           context->encryption.key64) != 0)
             return ERR_ENCRYPTION;
 
-        // if (xor_encrypt64(text_data,
-        //                   context->elf.elf64.text_size,
-        //                   context->encryption.key64) != 0)
-        //     return ERR_ENCRYPTION;
+        if (xor_encrypt64(text_data,
+                          context->elf.elf64.text_size,
+                          context->encryption.key64) != 0)
+            return ERR_ENCRYPTION;
 
         print_verbose(context, ".text after encryption: ");
         for (size_t i = 0; i < context->elf.elf64.shdr[text_index].sh_size; i++)

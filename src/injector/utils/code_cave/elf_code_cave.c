@@ -11,7 +11,7 @@ static int find_elf_code_cave_index(t_woody_context *context)
                 context->elf.elf64.shdr[i].sh_size == 0)
                 continue;
 
-            uint64_t cave_size;
+            unsigned int cave_size;
             if (i == (context->elf.elf64.ehdr->e_shnum - 1))
             {
                 cave_size = context->elf.elf64.ehdr->e_shoff -
@@ -107,8 +107,8 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
         "Setting segment %d permissions to RWX\n",
         segment_index);
     // In the case the cave is not in a segment with RWX permissions.
-    set_elf_segment_permission(context, segment_index, PF_X);
     set_elf_segment_permission(context, segment_index, PF_W);
+    set_elf_segment_permission(context, segment_index, PF_X);
 
     int text_segment_index = find_text_section_index(context);
     if (text_segment_index == -1)
@@ -124,7 +124,7 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
 }
 
 // Insert payload into code cave
-static int cave_insert_payload(t_woody_context *context, int section_index, unsigned int old_section_size)
+static int cave_insert_payload(t_woody_context *context, int section_index, int old_section_size)
 {
     char *new_section_data;
     char *payload;
@@ -239,7 +239,7 @@ int find_code_cave(t_woody_context *context)
 
         print_verbose(context, "Old entry point: %lx\n", old_entry);
         print_verbose(context, "New entry point: %lx\n", new_entry);
-        print_verbose(context, "Jump: %lx\n", (unsigned long)jump);
+        print_verbose(context, "Jump: %d\n", jump);
         print_verbose(context, "Fully injected payload:\n");
         for (size_t i = 0; i < INJECTION_PAYLOAD_SIZE; i++)
             print_verbose(context, "%02x", (unsigned char)context->elf.elf64.section_data[section_cave_index][old_section_size + i]);

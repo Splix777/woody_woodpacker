@@ -229,22 +229,6 @@ void print_woody_context(t_woody_context *context)
     print_section_header(context);
     print_section_data(context);
 
-    // Injection Information
-    // if (context->encryption.key64)
-    // {
-    //     printf("Encryption Key: ");
-    //     for (size_t i = 0; i < XOR_KEY_SIZE; i++)
-    //         printf("%02x", context->encryption.key64[i]);
-    //     printf("\n");
-    // }
-    // else
-    // {
-    //     printf("Encryption Key: ");
-    //     for (size_t i = 0; i < XOR_KEY_SIZE; i++)
-    //         printf("%02x", context->encryption.key32[i]);
-    //     printf("\n");
-    // }
-
     // Encryption Information
     printf("Compression Enabled: %s\n", context->compression ? "true" : "false");
     printf("Verbose Output: %s\n", context->verbose ? "true" : "false");

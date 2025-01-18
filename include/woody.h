@@ -37,7 +37,7 @@ typedef struct s_elf64
 
     char **section_data; // Section data (Actual data in the sections)
     // Injection Data
-    uint64_t cave_index;  // Code cave index
+    int cave_index;  // Code cave index
     uint64_t old_entry;   // Original entry point (e_entry)
     uint64_t text_size;   // Size of the .text section
     uint64_t text_entry;  // Entry point of the .text section
@@ -52,7 +52,7 @@ typedef struct s_elf32
 
     char **section_data;
     // Injection Data
-    uint32_t cave_index;
+    int cave_index;
     uint32_t old_entry;
     uint32_t text_size;
     uint32_t text_entry;
