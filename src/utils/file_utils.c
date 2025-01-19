@@ -69,7 +69,10 @@ static int load_files_to_memory(t_woody_context *context)
                       context->file.input_file_path);
         return ERR_INVALID_BINARY;
     }
-    print_verbose(context, "Input file mapped to memory\n");
+    print_verbose(context,
+                  "File %s mapped to memory at %p\n",
+                  context->file.input_file_path,
+                  context->file.file_buff);
 
     return SUCCESS;
 }
@@ -82,10 +85,16 @@ static int open_files(t_woody_context *context)
         0644);
     if (context->file.input_fd < 0)
     {
-        print_verbose(context, "Error opening input file: %s\n", context->file.input_file_path);
+        print_verbose(context,
+                      "Error opening input file: %s\n",
+                      context->file.input_file_path);
         return ERR_FILE_OPEN;
     }
-    print_verbose(context, "Input file FD: %d\n", context->file.input_fd);
+    print_verbose(context,
+                  "%s Input file: %s - FD(%d)\n",
+                  BOXED_ARROW_RIGHT,
+                  context->file.input_file_path,
+                  context->file.input_fd);
 
     context->file.output_fd = open_file(
         context->file.output_file_path,
@@ -93,10 +102,17 @@ static int open_files(t_woody_context *context)
         0755);
     if (context->file.output_fd < 0)
     {
-        print_verbose(context, "Error opening output file: %s\n", context->file.output_file_path);
+        print_verbose(context,
+                      "Error opening output file: %s\n",
+                      context->file.output_file_path);
         return ERR_FILE_OPEN;
     }
-    print_verbose(context, "Output file FD: %d\n", context->file.output_fd);
+    print_verbose(
+        context,
+        "%s Output file: %s - FD(%d)\n",
+        BOXED_ARROW_LEFT,
+        context->file.output_file_path,
+        context->file.output_fd);
 
     return SUCCESS;
 }

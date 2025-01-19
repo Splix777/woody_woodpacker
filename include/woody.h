@@ -13,19 +13,13 @@
 #include <elf.h>       // ELF header structures
 #include <errno.h>     // errno
 #include <ctype.h>     // isalnum, isxdigit
+#include <time.h>      // time
 #include "error_codes.h"
 #include "payload.h"
-
-// #ifndef PAYLOAD
-// #define PAYLOAD ""
-// #endif
-
-// #define PAYLOAD_SIZE (sizeof(PAYLOAD) - 1)
+#include "colors.h"
 
 // Standard Output File Name
 #define OUTPUT_FILE_NAME "woody"
-// XOR key for encryption
-#define XOR_KEY_SIZE 32
 // Code cave alignment
 #define CODE_CAVE_ALIGNMENT 8
 
@@ -37,7 +31,7 @@ typedef struct s_elf64
 
     char **section_data; // Section data (Actual data in the sections)
     // Injection Data
-    int cave_index;  // Code cave index
+    int cave_index;       // Code cave index
     uint64_t old_entry;   // Original entry point (e_entry)
     uint64_t text_size;   // Size of the .text section
     uint64_t text_entry;  // Entry point of the .text section
@@ -91,8 +85,8 @@ typedef struct s_woody_context
     // Encryption
     struct
     {
-        uint64_t key64; // XOR key
-        uint32_t key32; // XOR key
+        uint64_t key64;
+        uint32_t key32;
     } encryption;
 
     // State and metadata
@@ -143,8 +137,7 @@ void print_woody_context(t_woody_context *context);
 void print_verbose(t_woody_context *context, const char *format, ...);
 
 // Encryption
-// int generate_key(t_woody_context *context);
-// int encrypt(char *data, size_t size, unsigned char *key);
+int encrypt(char *data, size_t data_size, uint64_t key);
 int encrypt_text_section(t_woody_context *context);
 
 #endif // WOODY_H

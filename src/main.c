@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     else
         ret = inject_elf32(&context);
 
-    print_woody_context(&context);
+    // print_woody_context(&context);
     cleanup_context(&context);
     return ret;
 }

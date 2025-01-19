@@ -35,7 +35,7 @@ loader_entry_point:
 
 	jmp	start_unpacking
 
-msg	db	"[Unpacking...]", 10, 0
+msg	db	"....Woody....", 10, 0
 msg_len	equ	$ - msg
 
 start_unpacking:
