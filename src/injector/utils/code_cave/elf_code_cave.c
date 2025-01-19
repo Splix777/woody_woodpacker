@@ -1,6 +1,5 @@
 #include "woody.h"
 
-// Find Elf Code Cave Index
 static int find_elf_code_cave_index(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -86,7 +85,6 @@ static int find_elf_code_cave_index(t_woody_context *context)
     return -1;
 }
 
-// Set cave segment permission
 static int adjust_cave_segment_values(t_woody_context *context, int segment_index)
 {
     if (context->elf.is_64bit)
@@ -123,7 +121,6 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
     return SUCCESS;
 }
 
-// Insert payload into code cave
 static int cave_insert_payload(t_woody_context *context, int section_index, int old_section_size)
 {
     char *new_section_data;

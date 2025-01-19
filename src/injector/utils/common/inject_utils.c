@@ -1,6 +1,6 @@
 #include "woody.h"
 
-// Fine ELF Segment Index by Section
+// Find ELF Segment Index by Section
 int find_elf_segment_index_by_section(t_woody_context *context, int section_index)
 {
     if (context->elf.is_64bit)
@@ -112,4 +112,63 @@ void set_elf_segment_permission(t_woody_context *context, int index, int flags)
         context->elf.elf64.phdr[index].p_flags |= flags;
     else
         context->elf.elf32.phdr[index].p_flags |= flags;
+}
+
+// Find Last Segment by Type
+int find_last_segment_by_type(t_woody_context *context, unsigned int type)
+{
+    if (context->elf.is_64bit)
+    {
+        for (size_t i = context->elf.elf64.ehdr->e_phnum - 1; i > 0; i--)
+        {
+            // We are trying to find the last segment of a specific type
+            // iterating reverse through the program headers allows us
+            // to find the last segment of a specific type
+            if (context->elf.elf64.phdr[i].p_type == type)
+                return i;
+        }
+    }
+    else
+    {
+        for (size_t i = context->elf.elf32.ehdr->e_phnum - 1; i > 0; i--)
+        {
+            if (context->elf.elf32.phdr[i].p_type == type)
+                return i;
+        }
+    }
+
+    return -1;
+}
+
+// Find Last Section in Segment
+int find_last_section_in_segment(t_woody_context *context, int segment_index)
+{
+    if (context->elf.is_64bit)
+    {
+        Elf64_Phdr *segment = &context->elf.elf64.phdr[segment_index];
+        for (size_t i = context->elf.elf64.ehdr->e_shnum - 1; i > 0; i--)
+        {
+            Elf64_Shdr *section = &context->elf.elf64.shdr[i];
+            // We are trying to find the last section in the segment
+            // If the section address is within the segment virtual address
+            // and the section address is less than the segment
+            // virtual address + segment memory size it means the section is within the segment
+            if (section->sh_addr >= segment->p_vaddr &&
+                section->sh_addr < (segment->p_vaddr + segment->p_memsz))
+                return i;
+        }
+    }
+    else
+    {
+        Elf32_Phdr *segment = &context->elf.elf32.phdr[segment_index];
+        for (size_t i = context->elf.elf32.ehdr->e_shnum - 1; i > 0; i--)
+        {
+            Elf32_Shdr *section = &context->elf.elf32.shdr[i];
+            if (section->sh_addr >= segment->p_vaddr &&
+                section->sh_addr < (segment->p_vaddr + segment->p_memsz))
+                return i;
+        }
+    }
+
+    return -1;
 }

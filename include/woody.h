@@ -114,12 +114,14 @@ int inject_elf64(t_woody_context *context);
 // Injection methods
 int find_code_cave(t_woody_context *context);
 
-// ELF Utility
+// ELF Utility (Common)
 int find_elf_segment_index_by_section(t_woody_context *context, int section_index);
 char *find_elf_section_name(t_woody_context *context, int index);
 int find_elf_section_index(t_woody_context *context, char *name);
 int find_text_section_index(t_woody_context *context);
 void set_elf_segment_permission(t_woody_context *context, int index, int flags);
+int find_last_segment_by_type(t_woody_context *context, unsigned int type);
+int find_last_section_in_segment(t_woody_context *context, int segment_index);
 
 // Payload
 char *prepare_payload(t_woody_context *context);
