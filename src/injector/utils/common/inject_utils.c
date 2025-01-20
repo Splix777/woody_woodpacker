@@ -172,3 +172,66 @@ int find_last_section_in_segment(t_woody_context *context, int segment_index)
 
     return -1;
 }
+
+// Update Entry Point
+int update_entry_point(t_woody_context *context, int section_index)
+{
+    if (context->elf.is_64bit)
+    {
+        Elf64_Addr old_entry = context->elf.elf64.ehdr->e_entry;
+        context->elf.elf64.ehdr->e_entry = context->elf.elf64.shdr[section_index].sh_addr;
+        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+
+        memcpy(context->elf.elf64.section_data[section_index] + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+    }
+    else
+    {
+        Elf32_Addr old_entry = context->elf.elf32.ehdr->e_entry;
+        context->elf.elf32.ehdr->e_entry = context->elf.elf32.shdr[section_index].sh_addr;
+        int32_t jump = old_entry - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+
+        memcpy(context->elf.elf32.section_data[section_index] + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+    }
+
+    return SUCCESS;
+}
+
+Elf64_Shdr *initialized_section_header_64(void)
+{
+    Elf64_Shdr *section_header = malloc(sizeof(Elf64_Shdr));
+    if (section_header == NULL)
+        return NULL;
+
+    section_header->sh_name = 0;
+    section_header->sh_type = SHT_PROGBITS;
+    section_header->sh_flags = SHF_EXECINSTR | SHF_ALLOC;
+    section_header->sh_addr = 0;
+    section_header->sh_offset = 0;
+    section_header->sh_size = 0;
+    section_header->sh_link = 0;
+    section_header->sh_info = 0;
+    section_header->sh_addralign = 16;
+    section_header->sh_entsize = 0;
+
+    return section_header;
+}
+
+Elf32_Shdr *initialized_section_header_32(void)
+{
+    Elf32_Shdr *section_header = malloc(sizeof(Elf32_Shdr));
+    if (section_header == NULL)
+        return NULL;
+
+    section_header->sh_name = 0;
+    section_header->sh_type = SHT_PROGBITS;
+    section_header->sh_flags = SHF_EXECINSTR | SHF_ALLOC;
+    section_header->sh_addr = 0;
+    section_header->sh_offset = 0;
+    section_header->sh_size = 0;
+    section_header->sh_link = 0;
+    section_header->sh_info = 0;
+    section_header->sh_addralign = 16;
+    section_header->sh_entsize = 0;
+
+    return section_header;
+}

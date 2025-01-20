@@ -11,8 +11,8 @@ static int inject_code(t_woody_context *context)
     print_verbose(context, "Attempting to find a code cave...\n");
     if (find_code_cave(context) == SUCCESS)
         return SUCCESS;
-    // if (insert_section(context) == SUCCESS)
-    //     return SUCCESS;
+    if (insert_new_section(context) == SUCCESS)
+        return SUCCESS;
     // if (insert_segment(context) == SUCCESS)
     //     return SUCCESS;
 

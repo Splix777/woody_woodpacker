@@ -153,7 +153,7 @@ int write_elf(t_woody_context *context)
             if (context->elf.elf64.shdr[i].sh_type != SHT_NOBITS)
             {
                 add_zero_padding(context->file.output_fd, context->elf.elf64.shdr[i].sh_offset);
-                if (i == context->elf.elf64.cave_index)
+                if (i == context->elf.elf64.cave_index && context->elf.elf64.cave_index != 0)
                 {
                     write_to_file(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_SIZE);
                 }

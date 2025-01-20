@@ -241,7 +241,6 @@ int find_code_cave(t_woody_context *context)
         for (size_t i = 0; i < INJECTION_PAYLOAD_SIZE; i++)
             print_verbose(context, "%02x", (unsigned char)context->elf.elf64.section_data[section_cave_index][old_section_size + i]);
         print_verbose(context, "\n");
-
     }
 
     return SUCCESS;
