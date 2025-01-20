@@ -155,7 +155,7 @@ int write_elf(t_woody_context *context)
                 add_zero_padding(context->file.output_fd, context->elf.elf64.shdr[i].sh_offset);
                 if (i == context->elf.elf64.cave_index && context->elf.elf64.cave_index != 0)
                 {
-                    write_to_file(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_SIZE);
+                    write_to_file(context->file.output_fd, context->elf.elf64.section_data[i], context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_64_SIZE);
                 }
                 else
                 {
@@ -169,6 +169,39 @@ int write_elf(t_woody_context *context)
         for (int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
         {
             write_to_file(context->file.output_fd, &context->elf.elf64.shdr[i], sizeof(Elf64_Shdr));
+        }
+    }
+    else
+    {
+        print_verbose(context, "Writing 32-bit ELF\n");
+        write_to_file(context->file.output_fd, context->elf.elf32.ehdr, sizeof(Elf32_Ehdr));
+        add_zero_padding(context->file.output_fd, context->elf.elf32.ehdr->e_phoff);
+
+        print_verbose(context, "Writing 32-bit ELF Program Headers\n");
+        write_to_file(context->file.output_fd, context->elf.elf32.phdr, sizeof(Elf32_Phdr) * context->elf.elf32.ehdr->e_phnum);
+
+        print_verbose(context, "Writing 32-bit ELF Section Data\n");
+        for (int i = 0; i < context->elf.elf32.ehdr->e_shnum; i++)
+        {
+            if (context->elf.elf32.shdr[i].sh_type != SHT_NOBITS)
+            {
+                add_zero_padding(context->file.output_fd, context->elf.elf32.shdr[i].sh_offset);
+                if (i == context->elf.elf32.cave_index && context->elf.elf32.cave_index != 0)
+                {
+                    write_to_file(context->file.output_fd, context->elf.elf32.section_data[i], context->elf.elf32.shdr[i].sh_size + INJECTION_PAYLOAD_32_SIZE);
+                }
+                else
+                {
+                    write_to_file(context->file.output_fd, context->elf.elf32.section_data[i], context->elf.elf32.shdr[i].sh_size);
+                }
+            }
+        }
+        add_zero_padding(context->file.output_fd, context->elf.elf32.ehdr->e_shoff);
+
+        print_verbose(context, "Writing 32-bit ELF Section Headers\n");
+        for (int i = 0; i < context->elf.elf32.ehdr->e_shnum; i++)
+        {
+            write_to_file(context->file.output_fd, &context->elf.elf32.shdr[i], sizeof(Elf32_Shdr));
         }
     }
 

@@ -28,7 +28,7 @@ static int find_elf_code_cave_index(t_woody_context *context)
                           "Space between section %d and %d: %ld\n",
                           i, i + 1, cave_size);
 
-            if (cave_size >= INJECTION_PAYLOAD_SIZE)
+            if (cave_size >= INJECTION_PAYLOAD_64_SIZE)
             {
                 int segment_index = find_elf_segment_index_by_section(context, i);
                 if (context->elf.elf64.phdr[segment_index].p_type == PT_LOAD)
@@ -44,16 +44,18 @@ static int find_elf_code_cave_index(t_woody_context *context)
     }
     else
     {
-        for (int i = 0; i < context->elf.elf32.ehdr->e_shnum; i++)
+        for (int i = 0; i < context->elf.elf32.ehdr->e_shnum - 4; i++)
         {
-            if (context->elf.elf32.shdr[i].sh_type == SHT_NOBITS)
+            if (context->elf.elf32.shdr[i].sh_type == SHT_NOBITS ||
+                context->elf.elf32.shdr[i].sh_size == 0)
                 continue;
 
-            uint32_t cave_size;
+            unsigned int cave_size;
             if (i == (context->elf.elf32.ehdr->e_shnum - 1))
             {
                 cave_size = context->elf.elf32.ehdr->e_shoff -
-                            (context->elf.elf32.shdr[i].sh_offset + context->elf.elf32.shdr[i].sh_size);
+                            (context->elf.elf32.shdr[i].sh_offset +
+                             context->elf.elf32.shdr[i].sh_size);
             }
             else
             {
@@ -66,7 +68,7 @@ static int find_elf_code_cave_index(t_woody_context *context)
                           "Space between section %d and %d: %d\n",
                           i, i + 1, cave_size);
 
-            if (cave_size >= INJECTION_PAYLOAD_SIZE)
+            if (cave_size >= INJECTION_PAYLOAD_32_SIZE)
             {
                 int segment_index = find_elf_segment_index_by_section(context, i);
                 if (context->elf.elf32.phdr[segment_index].p_type == PT_LOAD)
@@ -90,14 +92,14 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
     if (context->elf.is_64bit)
     {
         print_verbose(context, "Adjusting segment %d size\n", segment_index);
-        context->elf.elf64.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_SIZE;
-        context->elf.elf64.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_SIZE;
+        context->elf.elf64.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_64_SIZE;
+        context->elf.elf64.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_64_SIZE;
     }
     else
     {
         print_verbose(context, "Adjusting segment %d size\n", segment_index);
-        context->elf.elf32.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_SIZE;
-        context->elf.elf32.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_SIZE;
+        context->elf.elf32.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_32_SIZE;
+        context->elf.elf32.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_32_SIZE;
     }
 
     print_verbose(
@@ -105,8 +107,7 @@ static int adjust_cave_segment_values(t_woody_context *context, int segment_inde
         "Setting segment %d permissions to RWX\n",
         segment_index);
     // In the case the cave is not in a segment with RWX permissions.
-    set_elf_segment_permission(context, segment_index, PF_W);
-    set_elf_segment_permission(context, segment_index, PF_X);
+    set_elf_segment_permission(context, segment_index, PF_W | PF_X);
 
     int text_segment_index = find_text_section_index(context);
     if (text_segment_index == -1)
@@ -131,7 +132,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
     {
         // Get section alignment
         // alignment = context->elf.elf64.shdr[section_index].sh_addralign;
-        size_t new_size = old_section_size + INJECTION_PAYLOAD_SIZE;
+        size_t new_size = old_section_size + INJECTION_PAYLOAD_64_SIZE;
 
         // Align the new size if needed
         // if (alignment > 0)
@@ -155,7 +156,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
         if (payload == NULL)
             return ERR_MEMORY_ALLOC;
 
-        memcpy(new_section_data + old_section_size, payload, INJECTION_PAYLOAD_SIZE);
+        memcpy(new_section_data + old_section_size, payload, INJECTION_PAYLOAD_64_SIZE);
 
         free(payload);
     }
@@ -172,7 +173,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
         //     new_size = (new_size + alignment - 1) & ~(alignment - 1);
         // }
 
-        new_section_data = realloc(context->elf.elf32.section_data[section_index], old_section_size + INJECTION_PAYLOAD_SIZE);
+        new_section_data = realloc(context->elf.elf32.section_data[section_index], old_section_size + INJECTION_PAYLOAD_32_SIZE);
         if (new_section_data == NULL)
         {
             print_verbose(context, "Failed to reallocate memory for new section data\n");
@@ -187,7 +188,7 @@ static int cave_insert_payload(t_woody_context *context, int section_index, int 
         if (payload == NULL)
             return ERR_MEMORY_ALLOC;
 
-        memcpy(new_section_data + old_section_size, payload, INJECTION_PAYLOAD_SIZE);
+        memcpy(new_section_data + old_section_size, payload, INJECTION_PAYLOAD_32_SIZE);
 
         free(payload);
     }
@@ -230,16 +231,35 @@ int find_code_cave(t_woody_context *context)
         //
         Elf64_Addr old_entry = context->elf.elf64.ehdr->e_entry;
         context->elf.elf64.ehdr->e_entry = new_entry;
-        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_64_SIZE - 32);
 
-        memcpy(context->elf.elf64.section_data[section_cave_index] + old_section_size + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+        memcpy(context->elf.elf64.section_data[section_cave_index] + old_section_size + INJECTION_PAYLOAD_64_SIZE - (32 + 4), &jump, 4);
 
         print_verbose(context, "Old entry point: %lx\n", old_entry);
         print_verbose(context, "New entry point: %lx\n", new_entry);
         print_verbose(context, "Jump: %d\n", jump);
         print_verbose(context, "Fully injected payload:\n");
-        for (size_t i = 0; i < INJECTION_PAYLOAD_SIZE; i++)
+        for (size_t i = 0; i < INJECTION_PAYLOAD_64_SIZE; i++)
             print_verbose(context, "%02x", (unsigned char)context->elf.elf64.section_data[section_cave_index][old_section_size + i]);
+        print_verbose(context, "\n");
+    }
+    else
+    {
+        Elf32_Addr new_entry;
+        new_entry = context->elf.elf32.shdr[section_cave_index].sh_addr + old_section_size;
+        //
+        Elf32_Addr old_entry = context->elf.elf32.ehdr->e_entry;
+        context->elf.elf32.ehdr->e_entry = new_entry;
+        int32_t jump = old_entry - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_32_SIZE - 16);
+
+        memcpy(context->elf.elf32.section_data[section_cave_index] + old_section_size + INJECTION_PAYLOAD_32_SIZE - (16 + 4), &jump, 4);
+
+        print_verbose(context, "Old entry point: %x\n", old_entry);
+        print_verbose(context, "New entry point: %x\n", new_entry);
+        print_verbose(context, "Jump: %d\n", jump);
+        print_verbose(context, "Fully injected payload:\n");
+        for (size_t i = 0; i < INJECTION_PAYLOAD_32_SIZE; i++)
+            print_verbose(context, "%02x", (unsigned char)context->elf.elf32.section_data[section_cave_index][old_section_size + i]);
         print_verbose(context, "\n");
     }
 

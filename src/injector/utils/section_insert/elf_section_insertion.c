@@ -94,16 +94,16 @@ static int update_segment_values(t_woody_context *context, int segment_index)
 {
     if (context->elf.is_64bit)
     {
-        context->elf.elf64.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_SIZE;
-        context->elf.elf64.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_SIZE;
+        context->elf.elf64.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_64_SIZE;
+        context->elf.elf64.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_64_SIZE;
         context->elf.elf64.phdr[segment_index].p_flags |= PF_W;
         context->elf.elf64.phdr[segment_index].p_flags |= PF_X;
         context->elf.elf64.phdr[segment_index].p_flags |= PF_R;
     }
     else
     {
-        context->elf.elf32.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_SIZE;
-        context->elf.elf32.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_SIZE;
+        context->elf.elf32.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_32_SIZE;
+        context->elf.elf32.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_32_SIZE;
         context->elf.elf32.phdr[segment_index].p_flags |= PF_W;
         context->elf.elf32.phdr[segment_index].p_flags |= PF_X;
         context->elf.elf32.phdr[segment_index].p_flags |= PF_R;
@@ -171,7 +171,7 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         payload_section->sh_name = context->elf.elf64.shdr[context->elf.elf64.ehdr->e_shstrndx].sh_size;
         payload_section->sh_offset = context->elf.elf64.phdr[segment_index].p_offset + context->elf.elf64.phdr[segment_index].p_filesz;
         payload_section->sh_addr = context->elf.elf64.phdr[segment_index].p_vaddr + context->elf.elf64.phdr[segment_index].p_memsz;
-        payload_section->sh_size = INJECTION_PAYLOAD_SIZE;
+        payload_section->sh_size = INJECTION_PAYLOAD_64_SIZE;
 
         context->elf.elf64.text_offset = payload_section->sh_addr;
 
@@ -256,7 +256,7 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         payload_section->sh_name = context->elf.elf32.shdr[context->elf.elf32.ehdr->e_shstrndx].sh_size;
         payload_section->sh_offset = context->elf.elf32.phdr[segment_index].p_offset + context->elf.elf32.phdr[segment_index].p_memsz;
         payload_section->sh_addr = context->elf.elf32.phdr[segment_index].p_vaddr + context->elf.elf32.phdr[segment_index].p_memsz;
-        payload_section->sh_size = INJECTION_PAYLOAD_SIZE;
+        payload_section->sh_size = INJECTION_PAYLOAD_32_SIZE;
 
         context->elf.elf32.text_offset = payload_section->sh_addr;
 
@@ -272,11 +272,11 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         size_t remaining_count = (context->elf.elf32.ehdr->e_shnum - section_index - 1);
 
         // Move the section headers to create space for the new section header
-        memmove(&context->elf.elf32.shdr[section_index + 2],
-                &context->elf.elf32.shdr[section_index + 1],
+        memmove(&context->elf.elf32.shdr[section_index + 1],
+                &context->elf.elf32.shdr[section_index],
                 remaining_size_to_move);
-        memmove(&context->elf.elf32.section_data[section_index + 2],
-                &context->elf.elf32.section_data[section_index + 1],
+        memmove(&context->elf.elf32.section_data[section_index + 1],
+                &context->elf.elf32.section_data[section_index],
                 remaining_count * sizeof(char *)); // Multiply by size of pointer
 
         section_index += 1;
@@ -305,6 +305,8 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         }
         memcpy(section_data, payload, payload_section->sh_size);
         context->elf.elf32.section_data[section_index] = section_data;
+        
+        free(payload_section);
     }
     free(payload);
 

@@ -180,17 +180,17 @@ int update_entry_point(t_woody_context *context, int section_index)
     {
         Elf64_Addr old_entry = context->elf.elf64.ehdr->e_entry;
         context->elf.elf64.ehdr->e_entry = context->elf.elf64.shdr[section_index].sh_addr;
-        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_64_SIZE - 32);
 
-        memcpy(context->elf.elf64.section_data[section_index] + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+        memcpy(context->elf.elf64.section_data[section_index] + INJECTION_PAYLOAD_64_SIZE - (32 + 4), &jump, 4);
     }
     else
     {
         Elf32_Addr old_entry = context->elf.elf32.ehdr->e_entry;
         context->elf.elf32.ehdr->e_entry = context->elf.elf32.shdr[section_index].sh_addr;
-        int32_t jump = old_entry - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_SIZE - 32);
+        int32_t jump = old_entry - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_32_SIZE - 16);
 
-        memcpy(context->elf.elf32.section_data[section_index] + INJECTION_PAYLOAD_SIZE - (32 + 4), &jump, 4);
+        memcpy(context->elf.elf32.section_data[section_index] + INJECTION_PAYLOAD_32_SIZE - (16 + 4), &jump, 4);
     }
 
     return SUCCESS;

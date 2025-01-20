@@ -101,7 +101,7 @@ int encrypt_text_section(t_woody_context *context)
         if (generate_key(context) != SUCCESS)
             return ERR_ENCRYPTION;
 
-        if (encrypt(text_data,
+        if (encrypt_64(text_data,
                     context->elf.elf64.text_size,
                     context->encryption.key64) != 0)
             return ERR_ENCRYPTION;
@@ -116,7 +116,7 @@ int encrypt_text_section(t_woody_context *context)
         if (generate_key(context) != SUCCESS)
             return ERR_ENCRYPTION;
 
-        if (encrypt(text_data,
+        if (encrypt_32(text_data,
                     context->elf.elf32.text_size,
                     context->encryption.key32) != 0)
             return ERR_ENCRYPTION;

@@ -108,8 +108,7 @@ int write_elf(t_woody_context *context);
 int validate_headers(t_woody_context *context);
 
 // ELF Injection
-int inject_elf32(t_woody_context *context);
-int inject_elf64(t_woody_context *context);
+int inject_elf(t_woody_context *context);
 
 // Injection methods
 int find_code_cave(t_woody_context *context);
@@ -143,7 +142,8 @@ void print_woody_context(t_woody_context *context);
 void print_verbose(t_woody_context *context, const char *format, ...);
 
 // Encryption
-int encrypt(char *data, size_t data_size, uint64_t key);
+int encrypt_64(char *data, size_t data_size, uint64_t key);
+int encrypt_32(char *data, size_t data_size, uint32_t key);
 int encrypt_text_section(t_woody_context *context);
 
 #endif // WOODY_H

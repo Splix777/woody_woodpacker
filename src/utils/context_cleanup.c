@@ -28,12 +28,6 @@ void cleanup_context(t_woody_context *context)
     }
     else
     {
-        if (context->elf.elf32.ehdr)
-            free(context->elf.elf32.ehdr);
-        if (context->elf.elf32.phdr)
-            free(context->elf.elf32.phdr);
-        if (context->elf.elf32.shdr)
-            free(context->elf.elf32.shdr);
         if (context->elf.elf32.section_data)
         {
             for (size_t i = 0; i < context->elf.elf32.ehdr->e_shnum; i++)
@@ -41,6 +35,12 @@ void cleanup_context(t_woody_context *context)
                     free(context->elf.elf32.section_data[i]);
             free(context->elf.elf32.section_data);
         }
+        if (context->elf.elf32.shdr)
+            free(context->elf.elf32.shdr);
+        if (context->elf.elf32.phdr)
+            free(context->elf.elf32.phdr);
+        if (context->elf.elf32.ehdr)
+            free(context->elf.elf32.ehdr);
     }
 
     if (context->file.output_file_path &&

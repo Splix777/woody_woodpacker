@@ -1,7 +1,7 @@
 section .text
-    global encrypt
+    global encrypt_64
 
-encrypt:
+encrypt_64:
     ; Inputs:
     ; rdi: data pointer (char *)
     ; rsi: size of data (size_t)

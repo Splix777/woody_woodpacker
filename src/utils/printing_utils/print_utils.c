@@ -102,7 +102,7 @@ static void print_section_data(t_woody_context *context)
                 printf("    Data: ");
                 if (i == (size_t)context->elf.elf64.cave_index)
                 {
-                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_SIZE; j++)
+                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_64_SIZE; j++)
                         printf("%02x", (unsigned char)context->elf.elf64.section_data[i][j]);
                 }
                 else

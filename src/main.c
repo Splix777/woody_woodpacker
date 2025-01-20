@@ -15,10 +15,8 @@ int main(int argc, char **argv)
     if ((ret = validate_headers(&context)) != SUCCESS)
         return handle_error(&context, ret);
 
-    if (context.elf.is_64bit)
-        ret = inject_elf64(&context);
-    else
-        ret = inject_elf32(&context);
+    if ((ret = inject_elf(&context)) != SUCCESS)
+        return handle_error(&context, ret);
 
     // print_woody_context(&context);
     cleanup_context(&context);

@@ -3,14 +3,15 @@
 static int inject_code(t_woody_context *context)
 {
     // We will try three methods to inject the code:
-    // 1. Find a code cave in the .text section
+    // 1. Find a code cave
     // 2. Section Insertion (Add a new section)
     // 3. Segment Insertion (Add a new segment)
 
-    // Method 1: Find a code cave in the .text section
+    // Method 1: Find a code cave
     print_verbose(context, "Attempting to find a code cave...\n");
     if (find_code_cave(context) == SUCCESS)
         return SUCCESS;
+    // Method 2: Section Insertion
     if (insert_new_section(context) == SUCCESS)
         return SUCCESS;
     // if (insert_segment(context) == SUCCESS)
@@ -19,7 +20,7 @@ static int inject_code(t_woody_context *context)
     return ERR_INJECTION;
 }
 
-int inject_elf64(t_woody_context *context)
+int inject_elf(t_woody_context *context)
 {
     print_verbose(context, "Injecting 64-bit ELF\n");
     if (initialize_struct(context) != SUCCESS)
