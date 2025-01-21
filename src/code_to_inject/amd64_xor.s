@@ -76,7 +76,7 @@ start_unpacking:
     ; ===============================
     ; Restore State and Jump
     ; ===============================
-    popx rax, rdi, rsi, rsp, rdx, rcx         ; Restore registers
+    popx rax, rdi, rsi, rsp, rdx, rcx          ; Restore registers
     popfq                                      ; Restore FLAGS
 
     jmp 0xFFFFFFFF                             ; To be patched

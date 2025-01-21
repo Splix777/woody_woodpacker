@@ -21,5 +21,3 @@ echo -n "unsigned char $PAYLOAD_NAME[] = {" >> "$OUTPUT_FILE"
 hexdump -v -e '",0x" 1/1 "%02x"' "$INPUT_FILE" | sed 's/^,//' >> "$OUTPUT_FILE"
 echo "};" >> "$OUTPUT_FILE"
 echo "const size_t ${PAYLOAD_NAME}_SIZE = sizeof($PAYLOAD_NAME);" >> "$OUTPUT_FILE"
-
-echo "Generated $OUTPUT_FILE from $INPUT_FILE"

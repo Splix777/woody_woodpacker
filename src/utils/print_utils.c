@@ -1,6 +1,4 @@
 #include "woody.h"
-#include <math.h>
-#include <stdarg.h>
 
 static const char *section_flags_to_string(uint64_t flags)
 {
@@ -226,7 +224,6 @@ void print_woody_context(t_woody_context *context)
     print_section_data(context);
 
     // Encryption Information
-    printf("Compression Enabled: %s\n", context->compression ? "true" : "false");
     printf("Verbose Output: %s\n", context->verbose ? "true" : "false");
 }
 

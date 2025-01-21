@@ -1,6 +1,5 @@
 #include "woody.h"
 
-// Allocate ELF Header
 static int allocate_elf_header(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -31,7 +30,6 @@ static int allocate_elf_header(t_woody_context *context)
     return SUCCESS;
 }
 
-// Allocate Program Header
 static int allocate_program_header(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -74,7 +72,6 @@ static int allocate_program_header(t_woody_context *context)
     return SUCCESS;
 }
 
-// Allocate Section Header
 static int allocate_section_header(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -131,7 +128,6 @@ static int allocate_section_header(t_woody_context *context)
     return SUCCESS;
 }
 
-// Allocate Section Data (The actual data in the sections)
 static int allocate_section_data(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -225,7 +221,6 @@ int initialize_struct(t_woody_context *context)
     if (allocate_section_data(context) != SUCCESS)
         return ERR_MEMORY_ALLOC;
 
-    // No need to keep the file buffer in memory
     munmap(context->file.file_buff, context->file.file_size);
 
     return SUCCESS;

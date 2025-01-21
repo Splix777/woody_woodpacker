@@ -12,25 +12,23 @@
 #include <sys/mman.h>  // mmap
 #include <elf.h>       // ELF header structures
 #include <errno.h>     // errno
-#include <ctype.h>     // isalnum, isxdigit
+#include <ctype.h>     // isalnum
 #include <time.h>      // time
+#include <stdarg.h>    // va_list, va_start, va_end
 #include "error_codes.h"
 #include "payload.h"
 #include "colors.h"
 
 // Standard Output File Name
 #define OUTPUT_FILE_NAME "woody"
-// Code cave alignment
-#define CODE_CAVE_ALIGNMENT 8
 
 typedef struct s_elf64
 {
-    Elf64_Ehdr *ehdr; // ELF Header
-    Elf64_Phdr *phdr; // Program Header
-    Elf64_Shdr *shdr; // Section Header
-
+    Elf64_Ehdr *ehdr;    // ELF Header
+    Elf64_Phdr *phdr;    // Program Header
+    Elf64_Shdr *shdr;    // Section Header
     char **section_data; // Section data (Actual data in the sections)
-    // Injection Data
+
     int payload_section_index; // Code cave index
     bool cave;                 // Flag to indicate code cave
     uint64_t text_size;        // Size of the .text section
@@ -43,9 +41,8 @@ typedef struct s_elf32
     Elf32_Ehdr *ehdr;
     Elf32_Phdr *phdr;
     Elf32_Shdr *shdr;
-
     char **section_data;
-    // Injection Data
+
     int payload_section_index;
     bool cave;
     uint32_t text_size;
@@ -53,7 +50,6 @@ typedef struct s_elf32
     uint32_t text_offset;
 } t_elf32;
 
-// Main Context Structure (Shuttle for all data)
 typedef struct s_woody_context
 {
     // File handling
@@ -84,30 +80,26 @@ typedef struct s_woody_context
 
     // State and metadata
     t_error_code error_code; // Error code for context state
-    bool compression;        // Flag to enable binary compression
     bool verbose;            // Flag to enable verbose output
 } t_woody_context;
 
-// Function prototypes
 // Context utility
 int argument_parse(int argc, char **argv, t_woody_context *context);
-int import_context_data(t_woody_context *context);
 int initialize_struct(t_woody_context *context);
 
 // File utility
 int write_elf(t_woody_context *context);
+int import_context_data(t_woody_context *context);
 
 // Header validation
 int validate_headers(t_woody_context *context);
 
 // ELF Injection
 int inject_elf(t_woody_context *context);
-
-// Injection methods
 int find_code_cave(t_woody_context *context);
 int insert_new_section(t_woody_context *context);
 
-// ELF Utility (Common)
+// ELF Utility
 int find_elf_segment_index_by_section(t_woody_context *context, int section_index);
 char *find_elf_section_name(t_woody_context *context, int index);
 int find_elf_section_index(t_woody_context *context, char *name);

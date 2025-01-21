@@ -36,15 +36,19 @@ PAYLOAD_OBJ_32 = $(OBJ_DIR)/code_to_inject/payload_32.o
 # All objects combined
 ALL_OBJS = $(PAYLOAD_OBJ_64) $(PAYLOAD_OBJ_32) $(C_OBJS) $(ASM_OBJS)
 
+# Colors
+GREEN = \033[32m
+RESET = \033[0m
+
 # Default target
 all: $(NAME)
 
 # Main binary build
 $(NAME): $(OBJ_DIR) $(ALL_OBJS)
-	@printf "Linking %-40s" "$(NAME)"
+	@printf "Linking %-42s" "$(NAME)"
 	@$(CC) $(CFLAGS) -o $@ $(ALL_OBJS)
 	@echo "[\033[32m OK \033[0m]"
-	@echo "Binary size: $$(wc -c < $@) bytes"
+	@echo "$(GREEN)Binary size: $$(wc -c < $@) bytes$(RESET)"
 
 # Create object directories
 $(OBJ_DIR):
@@ -58,20 +62,20 @@ $(OBJ_DIR):
 
 # Build injection object files
 $(INJECT_OBJ_64): $(INJECT_ASM_64)
-	@printf "Assembling %-40s" "$(notdir $<)"
+	@printf "Assembling %-39s" "$(notdir $<)"
 	@$(AS) -f bin -o $@ $<
 	@echo "[\033[32m OK \033[0m]"
-	@echo "Injection size: $$(wc -c < $@) bytes"
+	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
 
 $(INJECT_OBJ_32): $(INJECT_ASM_32)
-	@printf "Assembling %-40s" "$(notdir $<)"
+	@printf "Assembling %-39s" "$(notdir $<)"
 	@$(AS) -f bin -o $@ $<
 	@echo "[\033[32m OK \033[0m]"
-	@echo "Injection size: $$(wc -c < $@) bytes"
+	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
 
 # Generate and compile payloads
 $(PAYLOAD_OBJ_64): $(INJECT_OBJ_64)
-	@printf "Generating %-40s" "payload_64.c"
+	@printf "Generating %-39s" "payload_64.c"
 	@./generate_payload.sh $< $(INJECT_PAYLOAD_64) INJECTION_PAYLOAD_64
 	@echo "[\033[32m OK \033[0m]"
 	@printf "Compiling %-40s" "payload_64.c"
@@ -79,7 +83,7 @@ $(PAYLOAD_OBJ_64): $(INJECT_OBJ_64)
 	@echo "[\033[32m OK \033[0m]"
 
 $(PAYLOAD_OBJ_32): $(INJECT_OBJ_32)
-	@printf "Generating %-40s" "payload_32.c"
+	@printf "Generating %-39s" "payload_32.c"
 	@./generate_payload.sh $< $(INJECT_PAYLOAD_32) INJECTION_PAYLOAD_32
 	@echo "[\033[32m OK \033[0m]"
 	@printf "Compiling %-40s" "payload_32.c"
@@ -95,21 +99,21 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 
 # Compile Assembly source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
-	@printf "Assembling %-40s" "$(notdir $<)"
+	@printf "Assembling %-39s" "$(notdir $<)"
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) $< -o $@
 	@echo "[\033[32m OK \033[0m]"
 
 # Clean object files
 clean:
-	@printf "Cleaning objects... "
+	@printf "Cleaning objects... %-2s"
 	@rm -rf $(OBJ_DIR)
 	@rm -f $(INJECT_PAYLOAD_64) $(INJECT_PAYLOAD_32)
 	@echo "[\033[32m OK \033[0m]"
 
 # Clean everything
 fclean: clean
-	@printf "Cleaning binaries... "
+	@printf "Cleaning binaries... %-1s"
 	@rm -f $(NAME)
 	@rm -f woody
 	@echo "[\033[32m OK \033[0m]"

@@ -1,6 +1,5 @@
 #include "woody.h"
 
-// Check if the file name is valid
 static int is_valid_file_name(const char *name)
 {
     if (!name || strlen(name) > 255 || strlen(name) < 1)
@@ -28,7 +27,6 @@ static int is_valid_file_name(const char *name)
     return SUCCESS;
 }
 
-// Print help/usage information
 static void print_help(const char *name)
 {
     fprintf(stderr, "Usage: %s -f <input_file> [-o <output_file>] [-v] [-h]\n", name);
@@ -39,7 +37,6 @@ static void print_help(const char *name)
     fprintf(stderr, "  -h                 Display this help message\n");
 }
 
-// Parse command-line arguments
 int argument_parse(int argc, char **argv, t_woody_context *context)
 {
     if (argc < 3 || argc > 7)
@@ -48,8 +45,6 @@ int argument_parse(int argc, char **argv, t_woody_context *context)
         return ERR_INVALID_ARGS;
     }
 
-    // Default values
-    context->compression = false;
     context->verbose = false;
     context->file.output_file_path = NULL;
 
