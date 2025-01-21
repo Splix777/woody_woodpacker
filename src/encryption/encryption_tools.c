@@ -12,7 +12,6 @@ static uint64_t produce64BitKey(void)
         return 0;
     }
 
-    // Read exactly 8 bytes (sizeof uint64_t)
     ssize_t bytes_read = read(fd, &key, sizeof(key));
     if (bytes_read != sizeof(key))
     {
@@ -37,7 +36,6 @@ static uint32_t produce32BitKey(void)
         return 0;
     }
 
-    // Read exactly 4 bytes (sizeof uint32_t)
     ssize_t bytes_read = read(fd, &key, sizeof(key));
     if (bytes_read != sizeof(key))
     {
@@ -50,7 +48,6 @@ static uint32_t produce32BitKey(void)
     return key;
 }
 
-// Generate the XOR key
 static int generate_key(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -62,7 +59,9 @@ static int generate_key(t_woody_context *context)
 
         print_verbose(context, "Key: ");
         for (size_t i = 0; i < sizeof(uint64_t); i++)
-            print_verbose(context, "%02x", (unsigned char)(context->encryption.key64 >> (i * 8)));
+            print_verbose(context,
+                          "%02x",
+                          (unsigned char)(context->encryption.key64 >> (i * 8)));
         print_verbose(context, "\n");
     }
     else
@@ -74,11 +73,27 @@ static int generate_key(t_woody_context *context)
 
         print_verbose(context, "Key: ");
         for (size_t i = 0; i < sizeof(uint32_t); i++)
-            print_verbose(context, "%02x", (unsigned char)(context->encryption.key32 >> (i * 8)));
+            print_verbose(context,
+                          "%02x",
+                          (unsigned char)(context->encryption.key32 >> (i * 8)));
         print_verbose(context, "\n");
     }
 
     return SUCCESS;
+}
+
+static int encrypt_32a(char *data, size_t data_size, uint32_t key)
+{
+    const int n_rotations = 8;
+    const int int_bits = sizeof(uint32_t) * 8;
+
+    for (size_t i = 0; i < data_size; i++)
+    {
+        data[i] ^= (char)key;
+        key = (key >> n_rotations) | (key << (int_bits - n_rotations));
+    }
+
+    return 0;
 }
 
 int encrypt_text_section(t_woody_context *context)
@@ -108,7 +123,7 @@ int encrypt_text_section(t_woody_context *context)
     }
     else
     {
-        // char *text_data = (char *)context->elf.elf32.section_data[text_index];
+        char *text_data = (char *)context->elf.elf32.section_data[text_index];
 
         context->elf.elf32.text_size = context->elf.elf32.shdr[text_index].sh_size;
         context->elf.elf32.text_entry = context->elf.elf32.shdr[text_index].sh_addr;
@@ -116,14 +131,10 @@ int encrypt_text_section(t_woody_context *context)
         if (generate_key(context) != SUCCESS)
             return ERR_ENCRYPTION;
 
-        // if (encrypt_32(text_data,
-        //                context->elf.elf32.text_size,
-        //                context->encryption.key32) != 0)
-        //     return ERR_ENCRYPTION;
-        // if (encrypt_32(text_data,
-        //                context->elf.elf32.text_size,
-        //                context->encryption.key32) != 0)
-        //     return ERR_ENCRYPTION;
+        if (encrypt_32a(text_data,
+                        context->elf.elf32.text_size,
+                        context->encryption.key32) != 0)
+            return ERR_ENCRYPTION;
     }
 
     print_verbose(context, "Encrypted .text section\n");

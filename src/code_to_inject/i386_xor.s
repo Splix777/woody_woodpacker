@@ -49,7 +49,7 @@ loader_entry_point32:
 ; ===============================
 ; Data Section
 ; ===============================
-loading_message db "....Woody....", 10, 0
+loading_message db "....WOODY....", 10, 0
 loading_message_len equ $ - loading_message
 
 ; ===============================
@@ -91,6 +91,7 @@ decrypt_section:
     ; Cleanup and Jump to Entry
     ; ===============================
     popx eax, edi, esi, esp, edx, ecx, ebx
+
     jmp 0xFFFFFFF                           ; To be patched
 
 ; ===============================
