@@ -43,8 +43,7 @@ void cleanup_context(t_woody_context *context)
             free(context->elf.elf32.ehdr);
     }
 
-    if (context->file.output_file_path &&
-        context->error_code != SUCCESS)
+    if (context->file.output_file_path && context->error_code != SUCCESS)
         remove(context->file.output_file_path);
 
     memset(context, 0, sizeof(t_woody_context));

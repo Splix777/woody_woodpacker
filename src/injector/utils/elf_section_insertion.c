@@ -96,17 +96,13 @@ static int update_segment_values(t_woody_context *context, int segment_index)
     {
         context->elf.elf64.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_64_SIZE;
         context->elf.elf64.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_64_SIZE;
-        context->elf.elf64.phdr[segment_index].p_flags |= PF_W;
-        context->elf.elf64.phdr[segment_index].p_flags |= PF_X;
-        context->elf.elf64.phdr[segment_index].p_flags |= PF_R;
+        set_elf_segment_permission(context, segment_index, PF_W | PF_X | PF_R);
     }
     else
     {
         context->elf.elf32.phdr[segment_index].p_filesz += INJECTION_PAYLOAD_32_SIZE;
         context->elf.elf32.phdr[segment_index].p_memsz += INJECTION_PAYLOAD_32_SIZE;
-        context->elf.elf32.phdr[segment_index].p_flags |= PF_W;
-        context->elf.elf32.phdr[segment_index].p_flags |= PF_X;
-        context->elf.elf32.phdr[segment_index].p_flags |= PF_R;
+        set_elf_segment_permission(context, segment_index, PF_W | PF_X | PF_R);
     }
 
     return SUCCESS;
@@ -173,15 +169,6 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         payload_section->sh_addr = context->elf.elf64.phdr[segment_index].p_vaddr + context->elf.elf64.phdr[segment_index].p_memsz;
         payload_section->sh_size = INJECTION_PAYLOAD_64_SIZE;
 
-        context->elf.elf64.text_offset = payload_section->sh_addr;
-
-        payload = prepare_payload(context);
-        if (payload == NULL)
-        {
-            print_verbose(context, "Failed to prepare payload\n");
-            return ERR_INJECTION;
-        }
-
         // Calculate remaining size to move for section headers and section data
         size_t remaining_size_to_move = (context->elf.elf64.ehdr->e_shnum - section_index - 1);
 
@@ -214,11 +201,22 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         char *section_data = malloc(payload_section->sh_size);
         if (section_data == NULL)
         {
-            free(payload);
             free(payload_section);
             print_verbose(context, "Failed to allocate section data\n");
             return ERR_INJECTION;
         }
+
+        context->elf.elf64.text_offset = payload_section->sh_addr;
+        context->elf.elf64.payload_section_index = section_index;
+
+        payload = prepare_payload(context);
+        if (payload == NULL)
+        {
+            free(payload_section);
+            print_verbose(context, "Failed to prepare payload\n");
+            return ERR_INJECTION;
+        }
+
         memcpy(section_data, payload, payload_section->sh_size);
         context->elf.elf64.section_data[section_index] = section_data;
 
@@ -258,15 +256,6 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         payload_section->sh_addr = context->elf.elf32.phdr[segment_index].p_vaddr + context->elf.elf32.phdr[segment_index].p_memsz;
         payload_section->sh_size = INJECTION_PAYLOAD_32_SIZE;
 
-        context->elf.elf32.text_offset = payload_section->sh_addr;
-
-        payload = prepare_payload(context);
-        if (payload == NULL)
-        {
-            print_verbose(context, "Failed to prepare payload\n");
-            return ERR_INJECTION;
-        }
-
         // Calculate remaining size to move for section headers and section data
         size_t remaining_size_to_move = (context->elf.elf32.ehdr->e_shnum - section_index - 1) * sizeof(Elf32_Shdr);
         size_t remaining_count = (context->elf.elf32.ehdr->e_shnum - section_index - 1);
@@ -298,14 +287,25 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         char *section_data = malloc(payload_section->sh_size);
         if (section_data == NULL)
         {
-            free(payload);
             free(payload_section);
             print_verbose(context, "Failed to allocate section data\n");
             return ERR_INJECTION;
         }
+
+        context->elf.elf32.text_offset = payload_section->sh_addr;
+        context->elf.elf32.payload_section_index = section_index;
+
+        payload = prepare_payload(context);
+        if (payload == NULL)
+        {
+            free(payload_section);
+            print_verbose(context, "Failed to prepare payload\n");
+            return ERR_INJECTION;
+        }
+
         memcpy(section_data, payload, payload_section->sh_size);
         context->elf.elf32.section_data[section_index] = section_data;
-        
+
         free(payload_section);
     }
     free(payload);
@@ -356,12 +356,6 @@ int insert_new_section(t_woody_context *context)
     if (update_section_values(context, last_section_in_segment) != SUCCESS)
     {
         print_verbose(context, "Failed to update section values\n");
-        return ERR_INJECTION;
-    }
-
-    if (update_entry_point(context, last_section_in_segment + 1) != SUCCESS)
-    {
-        print_verbose(context, "Failed to update entry point\n");
         return ERR_INJECTION;
     }
 

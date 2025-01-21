@@ -24,6 +24,7 @@ typedef enum e_error_code
     ERR_INVALID_MAGIC,
     NO_CODE_CAVE,
     ERR_FILE_TRUNCATE,
+    ERR_ALREADY_SIGNED,
     ERR_UNKNOWN
 } t_error_code;
 

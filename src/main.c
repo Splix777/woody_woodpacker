@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     if ((ret = inject_elf(&context)) != SUCCESS)
         return handle_error(&context, ret);
 
-    // print_woody_context(&context);
+    print_woody_context(&context);
     cleanup_context(&context);
     return ret;
 }

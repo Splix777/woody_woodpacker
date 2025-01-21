@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdarg.h>
 
-// Helper function to convert ELF section flags to human-readable format
 static const char *section_flags_to_string(uint64_t flags)
 {
     static char buffer[128];
@@ -38,7 +37,6 @@ static const char *section_flags_to_string(uint64_t flags)
     return buffer;
 }
 
-// Helper function to convert ELF program header flags to human-readable format
 static const char *program_flags_to_string(uint64_t flags)
 {
     static char buffer[128];
@@ -60,7 +58,6 @@ static const char *program_flags_to_string(uint64_t flags)
     return buffer;
 }
 
-// Helper function to format size in human-readable form
 static char *format_size(size_t size)
 {
     static char buffer[32];
@@ -78,7 +75,6 @@ static char *format_size(size_t size)
     return buffer;
 }
 
-// Helper function for formatting offsets and addresses
 static char *format_address(uint64_t address)
 {
     static char buffer[32];
@@ -100,7 +96,7 @@ static void print_section_data(t_woody_context *context)
             {
                 printf("  %s:\n", find_elf_section_name(context, i));
                 printf("    Data: ");
-                if (i == (size_t)context->elf.elf64.cave_index)
+                if (i == (size_t)context->elf.elf64.payload_section_index)
                 {
                     for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size + INJECTION_PAYLOAD_64_SIZE; j++)
                         printf("%02x", (unsigned char)context->elf.elf64.section_data[i][j]);

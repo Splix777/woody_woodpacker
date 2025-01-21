@@ -1,5 +1,24 @@
 #include "woody.h"
 
+static int already_signed(t_woody_context *context)
+{
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)context->file.file_buff;
+    unsigned char *e_ident = ehdr->e_ident;
+
+    if (e_ident[10] == 0x57 &&
+        e_ident[11] == 0x4f &&
+        e_ident[12] == 0x4f &&
+        e_ident[13] == 0x44)
+    {
+        print_verbose(context, "%s File already signed\n", BOXED_CROSS);
+        return ERR_ALREADY_SIGNED;
+    }
+
+    print_verbose(context, "File not signed, found: %c%c%c%c\n", e_ident[10], e_ident[11], e_ident[12], e_ident[13]);
+
+    return SUCCESS;
+}
+
 static int validate_magic(t_woody_context *context)
 {
     Elf64_Ehdr *ehdr = (Elf64_Ehdr *)context->file.file_buff;
@@ -171,7 +190,6 @@ static int validate_entry_point(t_woody_context *context)
                           BOXED_CROSS, ehdr->e_entry);
             return ERR_INVALID_ELF;
         }
-        context->elf.elf64.old_entry = ehdr->e_entry;
     }
     else
     {
@@ -183,8 +201,20 @@ static int validate_entry_point(t_woody_context *context)
                           BOXED_CROSS, ehdr->e_entry);
             return ERR_INVALID_ELF;
         }
-        context->elf.elf32.old_entry = ehdr->e_entry;
     }
+
+    return SUCCESS;
+}
+
+static int sign_elf(t_woody_context *context)
+{
+    Elf64_Ehdr *ehdr = (Elf64_Ehdr *)context->file.file_buff;
+    unsigned char *e_ident = ehdr->e_ident;
+
+    e_ident[10] = 0x57;
+    e_ident[11] = 0x4f;
+    e_ident[12] = 0x4f;
+    e_ident[13] = 0x44;
 
     return SUCCESS;
 }
@@ -192,6 +222,8 @@ static int validate_entry_point(t_woody_context *context)
 int validate_headers(t_woody_context *context)
 {
     t_error_code ret;
+    if ((ret = already_signed(context)) != SUCCESS)
+        return ret;
     if ((ret = validate_magic(context)) != SUCCESS)
         return ret;
     if ((ret = validate_class_and_machine(context)) != SUCCESS)
@@ -201,6 +233,8 @@ int validate_headers(t_woody_context *context)
     if ((ret = validate_header_fields(context)) != SUCCESS)
         return ret;
     if ((ret = validate_entry_point(context)) != SUCCESS)
+        return ret;
+    if ((ret = sign_elf(context)) != SUCCESS)
         return ret;
 
     return SUCCESS;

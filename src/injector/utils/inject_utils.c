@@ -1,6 +1,5 @@
 #include "woody.h"
 
-// Find ELF Segment Index by Section
 int find_elf_segment_index_by_section(t_woody_context *context, int section_index)
 {
     if (context->elf.is_64bit)
@@ -31,7 +30,6 @@ int find_elf_segment_index_by_section(t_woody_context *context, int section_inde
     return -1;
 }
 
-// Find Elf Section Name
 char *find_elf_section_name(t_woody_context *context, int index)
 {
     if (context->elf.is_64bit)
@@ -50,7 +48,6 @@ char *find_elf_section_name(t_woody_context *context, int index)
     }
 }
 
-// Find Elf Section
 int find_elf_section_index(t_woody_context *context, char *name)
 {
     if (context->elf.is_64bit)
@@ -75,7 +72,6 @@ int find_elf_section_index(t_woody_context *context, char *name)
     return -1;
 }
 
-// Find Text Section Index
 int find_text_section_index(t_woody_context *context)
 {
     if (context->elf.is_64bit)
@@ -105,7 +101,6 @@ int find_text_section_index(t_woody_context *context)
     return -1;
 }
 
-// Set Elf Segment Permissions
 void set_elf_segment_permission(t_woody_context *context, int index, int flags)
 {
     if (context->elf.is_64bit)
@@ -114,7 +109,6 @@ void set_elf_segment_permission(t_woody_context *context, int index, int flags)
         context->elf.elf32.phdr[index].p_flags |= flags;
 }
 
-// Find Last Segment by Type
 int find_last_segment_by_type(t_woody_context *context, unsigned int type)
 {
     if (context->elf.is_64bit)
@@ -140,7 +134,6 @@ int find_last_segment_by_type(t_woody_context *context, unsigned int type)
     return -1;
 }
 
-// Find Last Section in Segment
 int find_last_section_in_segment(t_woody_context *context, int segment_index)
 {
     if (context->elf.is_64bit)
@@ -171,29 +164,6 @@ int find_last_section_in_segment(t_woody_context *context, int segment_index)
     }
 
     return -1;
-}
-
-// Update Entry Point
-int update_entry_point(t_woody_context *context, int section_index)
-{
-    if (context->elf.is_64bit)
-    {
-        Elf64_Addr old_entry = context->elf.elf64.ehdr->e_entry;
-        context->elf.elf64.ehdr->e_entry = context->elf.elf64.shdr[section_index].sh_addr;
-        int64_t jump = old_entry - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_64_SIZE - 32);
-
-        memcpy(context->elf.elf64.section_data[section_index] + INJECTION_PAYLOAD_64_SIZE - (32 + 4), &jump, 4);
-    }
-    else
-    {
-        Elf32_Addr old_entry = context->elf.elf32.ehdr->e_entry;
-        context->elf.elf32.ehdr->e_entry = context->elf.elf32.shdr[section_index].sh_addr;
-        int32_t jump = old_entry - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_32_SIZE - 16);
-
-        memcpy(context->elf.elf32.section_data[section_index] + INJECTION_PAYLOAD_32_SIZE - (16 + 4), &jump, 4);
-    }
-
-    return SUCCESS;
 }
 
 Elf64_Shdr *initialized_section_header_64(void)

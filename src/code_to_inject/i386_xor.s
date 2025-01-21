@@ -1,83 +1,102 @@
 bits 32
 
+; Macros for multiple push/pop operations
 %macro pushx 1-*
- %rep %0
-   push %1
-   %rotate 1
- %endrep
+    %rep %0
+        push %1
+        %rotate 1
+    %endrep
 %endmacro
 
 %macro popx 1-*
-  %rep %0
-    %rotate -1
-    pop %1
-  %endrep
+    %rep %0
+        %rotate -1
+        pop %1
+    %endrep
 %endmacro
 
 section .text
 
 loader_entry_point32:
-	pushx eax, edi, esi, esp, edx, ecx, ebx
+    ; ===============================
+    ; Register State Preservation
+    ; ===============================
+    pushx eax, edi, esi, esp, edx, ecx, ebx
 
-    ; syscall : eax
-    ; parameters order : ebx, ecx, edx, esi, edi, ebp
-    ; sys_write
-    call get_my_loc
-    sub edx, next_i - msg
-    mov ecx, edx
-    mov edx, msg_len
-    mov ebx, 1
-    mov eax, 4
+    ; ===============================
+    ; Display Loading Message
+    ; ===============================
+    call get_current_address
+    sub edx, after_call - loading_message    ; Calculate message address
+    mov ecx, edx                             ; Buffer address
+    mov edx, loading_message_len             ; Message length
+    mov ebx, 1                               ; File descriptor (stdout)
+    mov eax, 4                               ; sys_write syscall
     int 0x80
 
-    ; We save pie offset
-    call get_my_loc
-    sub edx, next_i - loader_entry_point32
-    mov ebx, edx
-    call get_my_loc
-    sub edx, next_i - info_offset
-    sub ebx, [edx]
+    ; ===============================
+    ; PIE (Position Independent Exec) Offset Calculation
+    ; ===============================
+    call get_current_address
+    sub edx, after_call - loader_entry_point32   ; Get current code location
+    mov ebx, edx                                 ; Store in ebx
+    call get_current_address
+    sub edx, after_call - info_offset           ; Get offset info location
+    sub ebx, [edx]                              ; Calculate PIE offset
 
-	jmp	start_unpacking
+    jmp decrypt_section
 
-msg	db	"....Woody....", 10, 0
-msg_len	equ	$ - msg
+; ===============================
+; Data Section
+; ===============================
+loading_message db "....Woody....", 10, 0
+loading_message_len equ $ - loading_message
 
-get_my_loc:
-    call next_i
-
-next_i:
+; ===============================
+; Helper Functions
+; ===============================
+get_current_address:
+    call after_call
+after_call:
     pop edx
     ret
 
-start_unpacking:
-    call get_my_loc
-    sub edx, next_i - info_addr
-    mov	eax, [edx]
-    call get_my_loc
-    sub edx, next_i - info_size
-    mov	ecx, [edx]
-    call get_my_loc
-    sub edx, next_i - info_key
-    mov	edx, [edx]
-
-      ; We add PIE offset
+; ===============================
+; Decryption Logic
+; ===============================
+decrypt_section:
+    ; Load decryption parameters
+    call get_current_address
+    sub edx, after_call - info_addr
+    mov eax, [edx]                          ; Load address to decrypt
+    call get_current_address
+    sub edx, after_call - info_size
+    mov ecx, [edx]                          ; Load size to decrypt
+    call get_current_address
+    sub edx, after_call - info_key
+    mov edx, [edx]                          ; Load decryption key
+    
+    ; Apply PIE offset to address
     add eax, ebx
-    add	ecx, eax
+    add ecx, eax                            ; Calculate end address
 
-  .loop:
-  	xor	byte [eax], dl
-  	ror	edx, 4
-  	inc	eax
-  	cmp	eax, ecx
-  	jnz	.loop
+.decrypt_loop:
+    xor byte [eax], dl                      ; Decrypt byte
+    ror edx, 4                              ; Rotate key
+    inc eax                                 ; Move to next byte
+    cmp eax, ecx                            ; Check if we're done
+    jnz .decrypt_loop
 
+    ; ===============================
+    ; Cleanup and Jump to Entry
+    ; ===============================
     popx eax, edi, esi, esp, edx, ecx, ebx
+    jmp 0xFFFFFFF                           ; To be patched
 
-    jmp	0xFFFFFFF
-
-; Random values here, to be patched
-info_key:	    dd	0xaaaaaaaa
-info_addr:	    dd	0xbbbbbbbb
-info_size:	    dd  0xcccccccc
-info_offset:    dd  0xdddddddd
+; ===============================
+; Patchable Information Block
+; ===============================
+info_key:    dd 0xaaaaaaaa                  ; Decryption key
+info_addr:   dd 0xbbbbbbbb                  ; Address to decrypt
+info_size:   dd 0xcccccccc                  ; Size to decrypt
+info_offset: dd 0xdddddddd                  ; PIE offset

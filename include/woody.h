@@ -31,11 +31,11 @@ typedef struct s_elf64
 
     char **section_data; // Section data (Actual data in the sections)
     // Injection Data
-    int cave_index;       // Code cave index
-    uint64_t old_entry;   // Original entry point (e_entry)
-    uint64_t text_size;   // Size of the .text section
-    uint64_t text_entry;  // Entry point of the .text section
-    uint64_t text_offset; // Offset of the .text section
+    int payload_section_index; // Code cave index
+    bool cave;                 // Flag to indicate code cave
+    uint64_t text_size;        // Size of the .text section
+    uint64_t text_entry;       // Entry point of the .text section
+    uint64_t text_offset;      // Offset of the .text section
 } t_elf64;
 
 typedef struct s_elf32
@@ -46,8 +46,8 @@ typedef struct s_elf32
 
     char **section_data;
     // Injection Data
-    int cave_index;
-    uint32_t old_entry;
+    int payload_section_index;
+    bool cave;
     uint32_t text_size;
     uint32_t text_entry;
     uint32_t text_offset;
@@ -74,13 +74,6 @@ typedef struct s_woody_context
         t_elf64 elf64; // ELF64 data
         t_elf32 elf32; // ELF32 data
     } elf;
-
-    // Injection data
-    struct
-    {
-        const char *payload; // Payload to inject
-        size_t payload_size; // Size of the payload
-    } injection;
 
     // Encryption
     struct
@@ -122,7 +115,6 @@ int find_text_section_index(t_woody_context *context);
 void set_elf_segment_permission(t_woody_context *context, int index, int flags);
 int find_last_segment_by_type(t_woody_context *context, unsigned int type);
 int find_last_section_in_segment(t_woody_context *context, int segment_index);
-int update_entry_point(t_woody_context *context, int section_index);
 Elf64_Shdr *initialized_section_header_64(void);
 Elf32_Shdr *initialized_section_header_32(void);
 

@@ -2,20 +2,12 @@
 
 static int inject_code(t_woody_context *context)
 {
-    // We will try three methods to inject the code:
-    // 1. Find a code cave
-    // 2. Section Insertion (Add a new section)
-    // 3. Segment Insertion (Add a new segment)
-
-    // Method 1: Find a code cave
     print_verbose(context, "Attempting to find a code cave...\n");
     if (find_code_cave(context) == SUCCESS)
         return SUCCESS;
-    // Method 2: Section Insertion
+    print_verbose(context, "Inserting a new section...\n");
     if (insert_new_section(context) == SUCCESS)
         return SUCCESS;
-    // if (insert_segment(context) == SUCCESS)
-    //     return SUCCESS;
 
     return ERR_INJECTION;
 }

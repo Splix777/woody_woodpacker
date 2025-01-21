@@ -22,6 +22,7 @@ static const t_error error_table[] = {
     {ERR_INVALID_MAGIC, "Invalid magic error"},
     {NO_CODE_CAVE, "No code cave found"},
     {ERR_FILE_TRUNCATE, "File truncate error"},
+    {ERR_ALREADY_SIGNED, "File already signed error"},
     {ERR_UNKNOWN, "Unknown error"},
 };
 

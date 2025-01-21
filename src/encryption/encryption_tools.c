@@ -102,13 +102,13 @@ int encrypt_text_section(t_woody_context *context)
             return ERR_ENCRYPTION;
 
         if (encrypt_64(text_data,
-                    context->elf.elf64.text_size,
-                    context->encryption.key64) != 0)
+                       context->elf.elf64.text_size,
+                       context->encryption.key64) != 0)
             return ERR_ENCRYPTION;
     }
     else
     {
-        char *text_data = (char *)context->elf.elf32.section_data[text_index];
+        // char *text_data = (char *)context->elf.elf32.section_data[text_index];
 
         context->elf.elf32.text_size = context->elf.elf32.shdr[text_index].sh_size;
         context->elf.elf32.text_entry = context->elf.elf32.shdr[text_index].sh_addr;
@@ -116,10 +116,14 @@ int encrypt_text_section(t_woody_context *context)
         if (generate_key(context) != SUCCESS)
             return ERR_ENCRYPTION;
 
-        if (encrypt_32(text_data,
-                    context->elf.elf32.text_size,
-                    context->encryption.key32) != 0)
-            return ERR_ENCRYPTION;
+        // if (encrypt_32(text_data,
+        //                context->elf.elf32.text_size,
+        //                context->encryption.key32) != 0)
+        //     return ERR_ENCRYPTION;
+        // if (encrypt_32(text_data,
+        //                context->elf.elf32.text_size,
+        //                context->encryption.key32) != 0)
+        //     return ERR_ENCRYPTION;
     }
 
     print_verbose(context, "Encrypted .text section\n");
