@@ -4,8 +4,12 @@ NAME = woody_woodpacker
 # Compiler and flags
 CC = gcc
 AS = nasm
-CFLAGS = -Wall -Wextra -Werror -g3 -O2
+CFLAGS = -Wall -Wextra -Werror -O2
 ASFLAGS = -f elf64 -g
+
+# Docker
+DOCKER_COMPOSE = docker compose
+SERVICE_NAME = woody_woodpacker
 
 # Directories
 SRC_DIR = src
@@ -47,7 +51,7 @@ all: $(NAME)
 $(NAME): $(OBJ_DIR) $(ALL_OBJS)
 	@printf "Linking %-42s" "$(NAME)"
 	@$(CC) $(CFLAGS) -o $@ $(ALL_OBJS)
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 	@echo "$(GREEN)Binary size: $$(wc -c < $@) bytes$(RESET)"
 
 # Create object directories
@@ -64,59 +68,82 @@ $(OBJ_DIR):
 $(INJECT_OBJ_64): $(INJECT_ASM_64)
 	@printf "Assembling %-39s" "$(notdir $<)"
 	@$(AS) -f bin -o $@ $<
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
 
 $(INJECT_OBJ_32): $(INJECT_ASM_32)
 	@printf "Assembling %-39s" "$(notdir $<)"
 	@$(AS) -f bin -o $@ $<
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
 
 # Generate and compile payloads
 $(PAYLOAD_OBJ_64): $(INJECT_OBJ_64)
 	@printf "Generating %-39s" "payload_64.c"
 	@./generate_payload.sh $< $(INJECT_PAYLOAD_64) INJECTION_PAYLOAD_64
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 	@printf "Compiling %-40s" "payload_64.c"
 	@$(CC) $(CFLAGS) $(INC) -c $(INJECT_PAYLOAD_64) -o $@
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 
 $(PAYLOAD_OBJ_32): $(INJECT_OBJ_32)
 	@printf "Generating %-39s" "payload_32.c"
 	@./generate_payload.sh $< $(INJECT_PAYLOAD_32) INJECTION_PAYLOAD_32
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 	@printf "Compiling %-40s" "payload_32.c"
 	@$(CC) $(CFLAGS) $(INC) -c $(INJECT_PAYLOAD_32) -o $@
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Compile C source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@printf "Compiling %-40s" "$(notdir $<)"
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Compile Assembly source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	@printf "Assembling %-39s" "$(notdir $<)"
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) $< -o $@
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
+
+# Docker
+build:
+	@echo "Building the Docker image..."
+	@$(DOCKER_COMPOSE) build
+
+up:
+	@echo "Starting the Docker container..."
+	@$(DOCKER_COMPOSE) up -d
+
+down:
+	@echo "Stopping the Docker container..."
+	@$(DOCKER_COMPOSE) down
+
+exec:
+	@echo "Accessing the Docker container..."
+	@$(DOCKER_COMPOSE) exec -it $(SERVICE_NAME) bash
+
+dclean:
+	@echo "Cleaning up Docker..."
+	@$(DOCKER_COMPOSE) down --rmi all
+	@docker system prune -f
+	@docker volume prune -f
 
 # Clean object files
 clean:
 	@printf "Cleaning objects... %-2s"
 	@rm -rf $(OBJ_DIR)
 	@rm -f $(INJECT_PAYLOAD_64) $(INJECT_PAYLOAD_32)
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Clean everything
 fclean: clean
 	@printf "Cleaning binaries... %-1s"
 	@rm -f $(NAME)
 	@rm -f woody
-	@echo "[\033[32m OK \033[0m]"
+	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Rebuild everything
 re: fclean all
@@ -133,4 +160,4 @@ dump: $(INJECT_OBJ_64) $(INJECT_OBJ_32)
 	@echo "Hexdump of 32-bit injection code:"
 	@hexdump -C $(INJECT_OBJ_32)
 
-.PHONY: all clean fclean re debug dump
+.PHONY: all clean fclean re debug dump build up down exec dclean
