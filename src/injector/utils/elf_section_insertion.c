@@ -130,6 +130,20 @@ static int update_section_values(t_woody_context *context, int section_index)
     return SUCCESS;
 }
 
+static int update_text_permissions(t_woody_context *context)
+{
+    int text_section_index = find_text_section_index(context);
+    if (text_section_index == -1)
+    {
+        print_verbose(context, "Failed to find text section index\n");
+        return ERR_INJECTION;
+    }
+
+    set_elf_segment_permission(context, text_section_index, PF_W | PF_X | PF_R);
+
+    return SUCCESS;
+}
+
 static int create_new_section(t_woody_context *context, int segment_index, int section_index)
 {
     char **updated_section_data;
@@ -206,6 +220,14 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
             return ERR_INJECTION;
         }
 
+        // Update text permissions
+        if (update_text_permissions(context) != SUCCESS)
+        {
+            free(payload_section);
+            print_verbose(context, "Failed to update text permissions\n");
+            return ERR_INJECTION;
+        }
+
         context->elf.elf64.text_offset = payload_section->sh_addr;
         context->elf.elf64.payload_section_index = section_index;
 
@@ -252,21 +274,21 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
             return ERR_INJECTION;
         }
         payload_section->sh_name = context->elf.elf32.shdr[context->elf.elf32.ehdr->e_shstrndx].sh_size;
-        payload_section->sh_offset = context->elf.elf32.phdr[segment_index].p_offset + context->elf.elf32.phdr[segment_index].p_memsz;
+        payload_section->sh_offset = context->elf.elf32.phdr[segment_index].p_offset + context->elf.elf32.phdr[segment_index].p_filesz;
         payload_section->sh_addr = context->elf.elf32.phdr[segment_index].p_vaddr + context->elf.elf32.phdr[segment_index].p_memsz;
         payload_section->sh_size = INJECTION_PAYLOAD_32_SIZE;
 
         // Calculate remaining size to move for section headers and section data
-        size_t remaining_size_to_move = (context->elf.elf32.ehdr->e_shnum - section_index - 1) * sizeof(Elf32_Shdr);
-        size_t remaining_count = (context->elf.elf32.ehdr->e_shnum - section_index - 1);
+        size_t remaining_size_to_move = (context->elf.elf32.ehdr->e_shnum - section_index - 1);
 
         // Move the section headers to create space for the new section header
         memmove(&context->elf.elf32.shdr[section_index + 1],
                 &context->elf.elf32.shdr[section_index],
-                remaining_size_to_move);
+                remaining_size_to_move * sizeof(Elf32_Shdr));
+
         memmove(&context->elf.elf32.section_data[section_index + 1],
                 &context->elf.elf32.section_data[section_index],
-                remaining_count * sizeof(char *)); // Multiply by size of pointer
+                remaining_size_to_move * sizeof(char *)); // Multiply by size of pointer
 
         section_index += 1;
 
@@ -289,6 +311,14 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         {
             free(payload_section);
             print_verbose(context, "Failed to allocate section data\n");
+            return ERR_INJECTION;
+        }
+
+        // Update text permissions
+        if (update_text_permissions(context) != SUCCESS)
+        {
+            free(payload_section);
+            print_verbose(context, "Failed to update text permissions\n");
             return ERR_INJECTION;
         }
 

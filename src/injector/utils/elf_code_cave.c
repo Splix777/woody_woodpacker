@@ -129,7 +129,6 @@ static int cave_insert_payload(t_woody_context *context, int section_index)
     if (context->elf.is_64bit)
     {
         int old_section_size = context->elf.elf64.shdr[section_index].sh_size;
-
         size_t new_size = old_section_size + INJECTION_PAYLOAD_64_SIZE;
 
         new_section_data = realloc(context->elf.elf64.section_data[section_index], new_size);

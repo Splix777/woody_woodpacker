@@ -1,10 +1,9 @@
 #include "woody.h"
 
-static uint64_t produce64BitKey(void)
+static uint64_t generate_64_bit_key(void)
 {
     uint64_t key = 0;
 
-    // Generate a random key
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0)
     {
@@ -24,11 +23,10 @@ static uint64_t produce64BitKey(void)
     return key;
 }
 
-static uint32_t produce32BitKey(void)
+static uint32_t generate_32_bit_key(void)
 {
     uint32_t key = 0;
 
-    // Generate a random key
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0)
     {
@@ -53,7 +51,7 @@ static int generate_key(t_woody_context *context)
     if (context->elf.is_64bit)
     {
         if (!context->encryption.key64)
-            context->encryption.key64 = produce64BitKey();
+            context->encryption.key64 = generate_64_bit_key();
         if (context->encryption.key64 == 0)
             return ERR_ENCRYPTION;
 
@@ -67,7 +65,7 @@ static int generate_key(t_woody_context *context)
     else
     {
         if (!context->encryption.key32)
-            context->encryption.key32 = produce32BitKey();
+            context->encryption.key32 = generate_32_bit_key();
         if (context->encryption.key32 == 0)
             return ERR_ENCRYPTION;
 
@@ -84,8 +82,8 @@ static int generate_key(t_woody_context *context)
 
 static int encrypt_32a(char *data, size_t data_size, uint32_t key)
 {
-    const int n_rotations = 8;
-    const int int_bits = sizeof(uint32_t) * 8;
+    uint32_t n_rotations = sizeof(uint32_t);
+    uint32_t int_bits = sizeof(uint32_t) * 8;
 
     for (size_t i = 0; i < data_size; i++)
     {

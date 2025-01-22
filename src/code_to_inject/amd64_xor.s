@@ -84,7 +84,6 @@ start_unpacking:
 ; ===============================
 ; Patchable Information Block
 ; ===============================
-info_start:
 info_key:    dq 0xaaaaaaaaaaaaaaaa            ; 64-bit decryption key
 info_addr:   dq 0xbbbbbbbbbbbbbbbb            ; 64-bit address to decrypt
 info_size:   dq 0xcccccccccccccccc            ; 64-bit size to decrypt

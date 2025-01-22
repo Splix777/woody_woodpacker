@@ -247,7 +247,7 @@ static int patch_entry_point(t_woody_context *context, char *patched_bin)
 
         int32_t jump = old_entry_point - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_32_SIZE - 16);
 
-        print_verbose(context, "Jump: %x\n", jump);
+        print_verbose(context, "Jump: %lx\n", jump);
 
         memcpy(patched_bin + jump_offset, &jump, sizeof(int32_t));
     }

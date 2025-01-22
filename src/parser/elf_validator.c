@@ -14,7 +14,9 @@ static int already_signed(t_woody_context *context)
         return ERR_ALREADY_SIGNED;
     }
 
-    print_verbose(context, "File not signed, found: %c%c%c%c\n", e_ident[10], e_ident[11], e_ident[12], e_ident[13]);
+    print_verbose(context,
+                  "File not signed, found: %c%c%c%c\n",
+                  e_ident[10], e_ident[11], e_ident[12], e_ident[13]);
 
     return SUCCESS;
 }

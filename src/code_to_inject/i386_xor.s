@@ -91,7 +91,6 @@ decrypt_section:
     ; Cleanup and Jump to Entry
     ; ===============================
     popx eax, edi, esi, esp, edx, ecx, ebx
-
     jmp 0xFFFFFFF                           ; To be patched
 
 ; ===============================
