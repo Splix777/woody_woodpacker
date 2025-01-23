@@ -6,7 +6,7 @@ uint64_t text_data_entry_placeholder_64 = 0xbbbbbbbbbbbbbbbb;
 uint64_t text_data_size_placeholder_64 = 0xcccccccccccccccc;
 uint64_t text_data_offset_placeholder_64 = 0xdddddddddddddddd;
 
-unsigned char jmp_placeholder_32[4] = {0x79, 0xff, 0xff, 0x0f};
+unsigned char jmp_placeholder_32[4] = {0x79, 0xff, 0xff, 0xff};
 uint32_t key_placeholder_32 = 0xaaaaaaaa;
 uint32_t text_data_entry_placeholder_32 = 0xbbbbbbbb;
 uint32_t text_data_size_placeholder_32 = 0xcccccccc;
@@ -218,10 +218,12 @@ static int patch_entry_point(t_woody_context *context, char *patched_bin)
 
         context->elf.elf64.ehdr->e_entry = new_entry_point;
 
-        int32_t jump = old_entry_point - (context->elf.elf64.ehdr->e_entry + INJECTION_PAYLOAD_64_SIZE - 32);
+        int32_t jump = (old_entry_point -
+                        (context->elf.elf64.ehdr->e_entry +
+                         INJECTION_PAYLOAD_64_SIZE -
+                         sizeof(uint64_t) * 4));
 
         print_verbose(context, "Jump: %lx\n", jump);
-
         memcpy(patched_bin + jump_offset, &jump, sizeof(int32_t));
     }
     else
@@ -245,10 +247,12 @@ static int patch_entry_point(t_woody_context *context, char *patched_bin)
 
         context->elf.elf32.ehdr->e_entry = new_entry_point;
 
-        int32_t jump = old_entry_point - (context->elf.elf32.ehdr->e_entry + INJECTION_PAYLOAD_32_SIZE - 16);
+        int32_t jump = (old_entry_point -
+                        (context->elf.elf32.ehdr->e_entry +
+                         INJECTION_PAYLOAD_32_SIZE -
+                         sizeof(uint32_t) * 4));
 
-        print_verbose(context, "Jump: %lx\n", jump);
-
+        print_verbose(context, "Jump: %x\n", jump);
         memcpy(patched_bin + jump_offset, &jump, sizeof(int32_t));
     }
 

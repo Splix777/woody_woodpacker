@@ -194,7 +194,7 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
         // Move the section data pointers to make room for the new section data
         memmove(&context->elf.elf64.section_data[section_index + 1],
                 &context->elf.elf64.section_data[section_index],
-                remaining_size_to_move * sizeof(char *)); // Multiply by size of pointer
+                remaining_size_to_move * sizeof(char *)); 
 
         section_index += 1;
 
@@ -288,7 +288,7 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
 
         memmove(&context->elf.elf32.section_data[section_index + 1],
                 &context->elf.elf32.section_data[section_index],
-                remaining_size_to_move * sizeof(char *)); // Multiply by size of pointer
+                remaining_size_to_move * sizeof(char *));
 
         section_index += 1;
 
@@ -340,18 +340,6 @@ static int create_new_section(t_woody_context *context, int segment_index, int s
     }
     free(payload);
 
-    if (update_symtab_sh_link(context) != SUCCESS)
-    {
-        print_verbose(context, "Failed to update symtab sh_link\n");
-        return ERR_INJECTION;
-    }
-
-    if (update_section_symtab_sh_link_count(context) != SUCCESS)
-    {
-        print_verbose(context, "Failed to update section symtab sh_link count\n");
-        return ERR_INJECTION;
-    }
-
     return SUCCESS;
 }
 
@@ -386,6 +374,18 @@ int insert_new_section(t_woody_context *context)
     if (update_section_values(context, last_section_in_segment) != SUCCESS)
     {
         print_verbose(context, "Failed to update section values\n");
+        return ERR_INJECTION;
+    }
+
+    if (update_symtab_sh_link(context) != SUCCESS)
+    {
+        print_verbose(context, "Failed to update symtab sh_link\n");
+        return ERR_INJECTION;
+    }
+
+    if (update_section_symtab_sh_link_count(context) != SUCCESS)
+    {
+        print_verbose(context, "Failed to update section symtab sh_link count\n");
         return ERR_INJECTION;
     }
 

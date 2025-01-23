@@ -59,6 +59,14 @@ static int validate_class_and_machine(t_woody_context *context)
         return ERR_INVALID_ELF;
     }
     context->elf.is_64bit = (e_class == ELFCLASS64);
+
+    // Temporary: Bit 32 not supported
+    if (!context->elf.is_64bit)
+    {
+        print_verbose(context, "%s 32-bit ELF not supported\n", BOXED_CROSS);
+        return ERR_INVALID_ELF;
+    }
+
     print_verbose(
         context,
         "ELF 64-bit: %s", context->elf.is_64bit ? "True\n" : "False\n");
