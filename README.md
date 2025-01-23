@@ -5,7 +5,7 @@
 <img src="docs/readme_images/woodpecker_elf.png" alt="Ouroboros" width="25%">
 </div>
 
-<h1 align="center">(🚧Under construction, please standby for updates🚧)</h1>
+<h1 align="center">(🚧Bonus still under construction...🚧)</h1>
 
 # Table of Contents
 - [Introduction](#introduction)
