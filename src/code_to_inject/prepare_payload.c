@@ -218,7 +218,7 @@ static int patch_entry_point(t_woody_context *context, char *patched_bin)
 
         context->elf.elf64.ehdr->e_entry = new_entry_point;
 
-        int32_t jump = (old_entry_point - (new_entry_point + jump_offset + 4));
+        int32_t jump = (old_entry_point - (new_entry_point + jump_offset + sizeof(int32_t)));
 
         print_verbose(context, "Jump: %lx\n", jump);
         memcpy(patched_bin + jump_offset, &jump, sizeof(int32_t));
