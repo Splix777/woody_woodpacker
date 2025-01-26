@@ -25,18 +25,15 @@ section .text
 loader_entry_point:
     ; Preserve CPU state
     pushfq                                      ; Save FLAGS register
-    pushx rax, rdi, rsi, rsp, rdx, rcx         ; Save general purpose registers
+    pushx rax, rdi, rsi, rdx, rcx, r8, r9       ; Save general-purpose registers
 
     ; ===============================
     ; Display Loading Message
     ; ===============================
-    ; System call convention for x86_64 Linux:
-    ; syscall number: rax
-    ; parameters: rdi, rsi, rdx, r10, r8, r9
     mov rax, 1                                  ; sys_write syscall
-    mov rdi, rax                               ; file descriptor (stdout)
-    lea rsi, [rel msg]                         ; message buffer
-    mov rdx, msg_len                           ; message length
+    mov rdi, 1                                  ; file descriptor (stdout)
+    lea rsi, [rel msg]                          ; message buffer
+    mov rdx, msg_len                            ; message length
     syscall
 
     ; ===============================
@@ -45,41 +42,35 @@ loader_entry_point:
     lea r12, [rel loader_entry_point]          ; Get current location
     sub r12, [rel info_offset]                 ; Calculate PIE offset
 
-    jmp start_unpacking
-
-; ===============================
-; Data Section
-; ===============================
-msg db "....WOODY....", 10, 0
-msg_len equ $ - msg
-
-; ===============================
-; Decryption Logic
-; ===============================
-start_unpacking:
-    ; Load decryption parameters
+    ; ===============================
+    ; Decryption Logic
+    ; ===============================
     mov rax, [rel info_addr]                   ; Load address to decrypt
-    mov rcx, [rel info_size]                   ; Load size to decrypt
-    mov rdx, [rel info_key]                    ; Load decryption key
-
-    ; Apply PIE offset
     add rax, r12                               ; Add PIE offset to address
-    add rcx, rax                               ; Calculate end address
+    mov rcx, [rel info_size]                   ; Load size to decrypt
+    lea rcx, [rax + rcx]                       ; Calculate end address
+    mov rdx, [rel info_key]                    ; Load decryption key
 
 .decrypt_loop:
     xor byte [rax], dl                         ; Decrypt byte
     ror rdx, 8                                 ; Rotate key
     inc rax                                    ; Move to next byte
     cmp rax, rcx                               ; Check if we're done
-    jnz .decrypt_loop
+    jne .decrypt_loop
 
     ; ===============================
     ; Restore State and Jump
     ; ===============================
-    popx rax, rdi, rsi, rsp, rdx, rcx          ; Restore registers
+    popx r9, r8, rcx, rdx, rsi, rdi, rax       ; Restore registers
     popfq                                      ; Restore FLAGS
 
     jmp 0xFFFFFFFF                             ; To be patched
+
+; ===============================
+; Data Section
+; ===============================
+msg db "....WOODY....", 10, 0
+msg_len equ $ - msg
 
 ; ===============================
 ; Patchable Information Block

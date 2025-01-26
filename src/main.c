@@ -1,8 +1,7 @@
 #include "woody.h"
 
-int main(int argc, char **argv)
-{
-    t_error_code ret;
+int main(int argc, char** argv) {
+    t_error_code    ret;
     t_woody_context context;
     memset(&context, 0, sizeof(t_woody_context));
 
@@ -18,6 +17,7 @@ int main(int argc, char **argv)
     if ((ret = inject_elf(&context)) != SUCCESS)
         return handle_error(&context, ret);
 
+    // print_woody_context(&context);
     cleanup_context(&context);
     return ret;
 }

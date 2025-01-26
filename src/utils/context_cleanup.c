@@ -1,7 +1,6 @@
 #include "woody.h"
 
-void cleanup_context(t_woody_context *context)
-{
+void cleanup_context(t_woody_context* context) {
     if (context->file.input_fd > 0)
         close(context->file.input_fd);
     if (context->file.output_fd > 0)
@@ -10,10 +9,8 @@ void cleanup_context(t_woody_context *context)
     if (context->file.file_buff)
         munmap(context->file.file_buff, context->file.file_size);
 
-    if (context->elf.is_64bit)
-    {
-        if (context->elf.elf64.section_data)
-        {
+    if (context->elf.is_64bit) {
+        if (context->elf.elf64.section_data) {
             for (size_t i = 0; i < context->elf.elf64.ehdr->e_shnum; i++)
                 if (context->elf.elf64.section_data[i])
                     free(context->elf.elf64.section_data[i]);
@@ -25,11 +22,8 @@ void cleanup_context(t_woody_context *context)
             free(context->elf.elf64.phdr);
         if (context->elf.elf64.ehdr)
             free(context->elf.elf64.ehdr);
-    }
-    else
-    {
-        if (context->elf.elf32.section_data)
-        {
+    } else {
+        if (context->elf.elf32.section_data) {
             for (size_t i = 0; i < context->elf.elf32.ehdr->e_shnum; i++)
                 if (context->elf.elf32.section_data[i])
                     free(context->elf.elf32.section_data[i]);
