@@ -82,7 +82,7 @@ decrypt_section:
 
 .decrypt_loop:
     xor byte [eax], dl                      ; Decrypt byte
-    ror edx, 4                              ; Rotate key
+    ror edx, 8                              ; Rotate key
     inc eax                                 ; Move to next byte
     cmp eax, ecx                            ; Check if we're done
     jnz .decrypt_loop
