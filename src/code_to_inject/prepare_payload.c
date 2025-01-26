@@ -6,7 +6,7 @@ uint64_t      text_data_entry_placeholder_64  = 0xbbbbbbbbbbbbbbbb;
 uint64_t      text_data_size_placeholder_64   = 0xcccccccccccccccc;
 uint64_t      text_data_offset_placeholder_64 = 0xdddddddddddddddd;
 
-unsigned char jmp_placeholder_32[4]           = { 0x79, 0xff, 0xff, 0xff };
+unsigned char jmp_placeholder_32[4]           = { 0x88, 0xff, 0xff, 0xff };
 uint32_t      key_placeholder_32              = 0xaaaaaaaa;
 uint32_t      text_data_entry_placeholder_32  = 0xbbbbbbbb;
 uint32_t      text_data_size_placeholder_32   = 0xcccccccc;

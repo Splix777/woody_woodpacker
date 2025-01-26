@@ -47,12 +47,6 @@ loader_entry_point32:
     jmp decrypt_section
 
 ; ===============================
-; Data Section
-; ===============================
-loading_message db "....WOODY....", 10, 0
-loading_message_len equ $ - loading_message
-
-; ===============================
 ; Helper Functions
 ; ===============================
 get_current_address:
@@ -92,6 +86,13 @@ decrypt_section:
     ; ===============================
     popx eax, edi, esi, esp, edx, ecx, ebx
     jmp 0xFFFFFFFF                          ; To be patched
+
+; ===============================
+; Data Section
+; ===============================
+loading_message db "....WOODY....", 10, 0
+loading_message_len equ $ - loading_message
+
 
 ; ===============================
 ; Patchable Information Block
