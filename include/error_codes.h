@@ -1,6 +1,15 @@
 #ifndef ERROR_CODES_H
 #define ERROR_CODES_H
 
+/*
+ * Project-wide error codes.
+ *
+ * Most functions return t_error_code. main() calls handle_error() which:
+ *  - records the error on the context
+ *  - frees resources (cleanup_context)
+ *  - prints a human-readable message
+ */
+
 typedef enum e_error_code
 {
     SUCCESS = 0,

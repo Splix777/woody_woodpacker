@@ -1,5 +1,15 @@
 #include "woody.h"
 
+/*
+ * Debug/verbose printing.
+ *
+ * This repo uses a simple convention:
+ *  - print_verbose(context, ...) logs only when context->verbose is true
+ *  - print_woody_context() dumps the parsed ELF structures for debugging
+ *
+ * These functions are not part of the "packing" logic; they're here to make
+ * it easier to inspect offsets/addresses while iterating.
+ */
 static const char* section_flags_to_string(uint64_t flags) {
     static char buffer[128];
     buffer[0] = '\0';
@@ -80,31 +90,25 @@ static void print_section_data(t_woody_context* context) {
         return;
 
     printf("Section Data:\n");
-    if (context->elf.is_64bit) {
-        for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++) {
-            if (context->elf.elf64.shdr[i].sh_type != SHT_NOBITS) {
-                printf("  %s:\n", find_elf_section_name(context, i));
-                printf("    Data: ");
-                if (i == (size_t)context->elf.elf64.payload_section_index
-                    && context->elf.elf64.cave) {
-                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size
-                             + INJECTION_PAYLOAD_64_SIZE;
-                         j++)
-                        printf("%02x",
-                            (unsigned char)
-                                context->elf.elf64.section_data[i][j]);
-                } else {
-                    for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size;
-                         j++)
-                        printf("%02x",
-                            (unsigned char)
-                                context->elf.elf64.section_data[i][j]);
-                }
-                printf("\n");
+    for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++) {
+        if (context->elf.elf64.shdr[i].sh_type != SHT_NOBITS) {
+            printf("  %s:\n", find_elf_section_name(context, i));
+            printf("    Data: ");
+            if (i == (size_t)context->elf.elf64.payload_section_index
+                && context->elf.elf64.cave) {
+                for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size
+                         + INJECTION_PAYLOAD_64_SIZE;
+                     j++)
+                    printf("%02x",
+                        (unsigned char)context->elf.elf64.section_data[i][j]);
+            } else {
+                for (size_t j = 0; j < context->elf.elf64.shdr[i].sh_size;
+                     j++)
+                    printf("%02x",
+                        (unsigned char)context->elf.elf64.section_data[i][j]);
             }
+            printf("\n");
         }
-    } else {
-        // TODO: Implement for 32-bit
     }
 }
 
@@ -113,34 +117,27 @@ static void print_section_header(t_woody_context* context) {
         return;
 
     printf("Section Headers:\n");
-    if (context->elf.is_64bit) {
-        for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++) {
-            Elf64_Shdr* shdr = context->elf.elf64.shdr + i;
-            printf("  [%2u] %-17s:\n", i, find_elf_section_name(context, i));
-            printf("    Type:             %s\n",
-                shdr->sh_type == SHT_PROGBITS     ? "PROGBITS"
-                    : shdr->sh_type == SHT_SYMTAB ? "SYMTAB"
-                    : shdr->sh_type == SHT_STRTAB ? "STRTAB"
-                                                  : "OTHER");
-            printf("    Flags:            %s\n",
-                section_flags_to_string(shdr->sh_flags));
-            printf(
-                "    Address:          %s\n", format_address(shdr->sh_addr));
-            printf("    Offset:           %s (%s)\n",
-                format_address(shdr->sh_offset), format_size(shdr->sh_offset));
-            printf("    Size:             %s (%s)\n",
-                format_address(shdr->sh_size), format_size(shdr->sh_size));
-            printf(
-                "    Link:             %lu\n", (unsigned long)shdr->sh_link);
-            printf(
-                "    Info:             %lu\n", (unsigned long)shdr->sh_info);
-            printf("    Alignment:        0x%lx\n",
-                (unsigned long)shdr->sh_addralign);
-            printf("    Entry Size:       0x%lx\n",
-                (unsigned long)shdr->sh_entsize);
-        }
-    } else {
-        // Implement for 32-bit
+    for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_shnum; i++) {
+        Elf64_Shdr* shdr = context->elf.elf64.shdr + i;
+        printf("  [%2u] %-17s:\n", i, find_elf_section_name(context, i));
+        printf("    Type:             %s\n",
+            shdr->sh_type == SHT_PROGBITS     ? "PROGBITS"
+                : shdr->sh_type == SHT_SYMTAB ? "SYMTAB"
+                : shdr->sh_type == SHT_STRTAB ? "STRTAB"
+                                              : "OTHER");
+        printf("    Flags:            %s\n",
+            section_flags_to_string(shdr->sh_flags));
+        printf("    Address:          %s\n", format_address(shdr->sh_addr));
+        printf("    Offset:           %s (%s)\n",
+            format_address(shdr->sh_offset), format_size(shdr->sh_offset));
+        printf("    Size:             %s (%s)\n",
+            format_address(shdr->sh_size), format_size(shdr->sh_size));
+        printf("    Link:             %lu\n", (unsigned long)shdr->sh_link);
+        printf("    Info:             %lu\n", (unsigned long)shdr->sh_info);
+        printf("    Alignment:        0x%lx\n",
+            (unsigned long)shdr->sh_addralign);
+        printf("    Entry Size:       0x%lx\n",
+            (unsigned long)shdr->sh_entsize);
     }
 }
 
@@ -149,32 +146,25 @@ static void print_program_header(t_woody_context* context) {
         return;
 
     printf("Program Headers:\n");
-    if (context->elf.is_64bit) {
-        for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_phnum; i++) {
-            Elf64_Phdr* phdr = context->elf.elf64.phdr + i;
-            printf("  [%2u]\n", i);
-            printf("    Type:             %s\n",
-                phdr->p_type == PT_LOAD          ? "LOAD"
-                    : phdr->p_type == PT_DYNAMIC ? "DYNAMIC"
-                    : phdr->p_type == PT_INTERP  ? "INTERP"
-                                                 : "OTHER");
-            printf("    Flags:            %s\n",
-                program_flags_to_string(phdr->p_flags));
-            printf("    Offset:           %s (%s)\n",
-                format_address(phdr->p_offset), format_size(phdr->p_offset));
-            printf(
-                "    Virtual Address:  %s\n", format_address(phdr->p_vaddr));
-            printf(
-                "    Physical Address: %s\n", format_address(phdr->p_paddr));
-            printf("    File Size:        %s (%s)\n",
-                format_address(phdr->p_filesz), format_size(phdr->p_filesz));
-            printf("    Memory Size:      %s (%s)\n",
-                format_address(phdr->p_memsz), format_size(phdr->p_memsz));
-            printf(
-                "    Alignment:        0x%lx\n", (unsigned long)phdr->p_align);
-        }
-    } else {
-        // Implement for 32-bit
+    for (unsigned int i = 0; i < context->elf.elf64.ehdr->e_phnum; i++) {
+        Elf64_Phdr* phdr = context->elf.elf64.phdr + i;
+        printf("  [%2u]\n", i);
+        printf("    Type:             %s\n",
+            phdr->p_type == PT_LOAD          ? "LOAD"
+                : phdr->p_type == PT_DYNAMIC ? "DYNAMIC"
+                : phdr->p_type == PT_INTERP  ? "INTERP"
+                                             : "OTHER");
+        printf("    Flags:            %s\n",
+            program_flags_to_string(phdr->p_flags));
+        printf("    Offset:           %s (%s)\n",
+            format_address(phdr->p_offset), format_size(phdr->p_offset));
+        printf("    Virtual Address:  %s\n", format_address(phdr->p_vaddr));
+        printf("    Physical Address: %s\n", format_address(phdr->p_paddr));
+        printf("    File Size:        %s (%s)\n",
+            format_address(phdr->p_filesz), format_size(phdr->p_filesz));
+        printf("    Memory Size:      %s (%s)\n",
+            format_address(phdr->p_memsz), format_size(phdr->p_memsz));
+        printf("    Alignment:        0x%lx\n", (unsigned long)phdr->p_align);
     }
 }
 
@@ -183,33 +173,26 @@ static void print_elf_header(t_woody_context* context) {
         return;
 
     printf("ELF Header:\n");
-    printf("  64-bit ELF: %s\n", context->elf.is_64bit ? "true" : "false");
-
-    if (context->elf.is_64bit) {
-        printf("  ELF64 Header:\n");
-        printf("    Magic: ");
-        for (int i = 0; i < EI_NIDENT; i++)
-            printf("%02x", context->elf.elf64.ehdr->e_ident[i]);
-        printf("\n");
-        printf("    Entry Point: %s\n",
-            format_address(context->elf.elf64.ehdr->e_entry));
-        printf("    Program Header Offset: %s (%s)\n",
-            format_address(context->elf.elf64.ehdr->e_phoff),
-            format_size(context->elf.elf64.ehdr->e_phoff));
-        printf("    Section Header Offset: %s (%s)\n",
-            format_address(context->elf.elf64.ehdr->e_shoff),
-            format_size(context->elf.elf64.ehdr->e_shoff));
-        printf("    Program Header Entry Size: %u\n",
-            context->elf.elf64.ehdr->e_phentsize);
-        printf("    Program Header Entry Count: %u\n",
-            context->elf.elf64.ehdr->e_phnum);
-        printf("    Section Header Entry Size: %u\n",
-            context->elf.elf64.ehdr->e_shentsize);
-        printf("    Section Header Entry Count: %u\n",
-            context->elf.elf64.ehdr->e_shnum);
-    } else {
-        // Implement for 32-bit
-    }
+    printf("  ELF64 Header:\n");
+    printf("    Magic: ");
+    for (int i = 0; i < EI_NIDENT; i++)
+        printf("%02x", context->elf.elf64.ehdr->e_ident[i]);
+    printf("\n");
+    printf("    Entry Point: %s\n", format_address(context->elf.elf64.ehdr->e_entry));
+    printf("    Program Header Offset: %s (%s)\n",
+        format_address(context->elf.elf64.ehdr->e_phoff),
+        format_size(context->elf.elf64.ehdr->e_phoff));
+    printf("    Section Header Offset: %s (%s)\n",
+        format_address(context->elf.elf64.ehdr->e_shoff),
+        format_size(context->elf.elf64.ehdr->e_shoff));
+    printf("    Program Header Entry Size: %u\n",
+        context->elf.elf64.ehdr->e_phentsize);
+    printf("    Program Header Entry Count: %u\n",
+        context->elf.elf64.ehdr->e_phnum);
+    printf("    Section Header Entry Size: %u\n",
+        context->elf.elf64.ehdr->e_shentsize);
+    printf("    Section Header Entry Count: %u\n",
+        context->elf.elf64.ehdr->e_shnum);
 }
 
 void print_woody_context(t_woody_context* context) {

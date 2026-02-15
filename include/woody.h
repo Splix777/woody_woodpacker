@@ -1,3 +1,19 @@
+/*
+ * Woody_Woodpacker (ELF64/x86_64 only)
+ *
+ * High-level pipeline:
+ *  1) Parse CLI args into t_woody_context
+ *  2) mmap input file -> validate ELF headers (ELF64 + EM_X86_64)
+ *  3) Copy ELF headers/sections into owned buffers (initialize_struct)
+ *  4) Encrypt the original .text section (XOR stream, key printed)
+ *  5) Inject a new executable section ".woody" containing a loader stub
+ *     The stub prints "....WOODY....\n", decrypts .text in memory, then
+ *     jumps back to the original entry point.
+ *  6) Serialize a new ELF to disk (default output name: ./woody)
+ *
+ * Build + test instructions are in docs/HOWTO.md.
+ */
+
 #ifndef WOODY_H
 #define WOODY_H
 
@@ -36,20 +52,6 @@ typedef struct s_elf64
     uint64_t text_offset;      // Offset of the .text section
 } t_elf64;
 
-typedef struct s_elf32
-{
-    Elf32_Ehdr *ehdr;
-    Elf32_Phdr *phdr;
-    Elf32_Shdr *shdr;
-    char **section_data;
-
-    int payload_section_index;
-    bool cave;
-    uint32_t text_size;
-    uint32_t text_entry;
-    uint32_t text_offset;
-} t_elf32;
-
 typedef struct s_woody_context
 {
     // File handling
@@ -68,19 +70,18 @@ typedef struct s_woody_context
     {
         bool is_64bit; // Flag to indicate 64-bit ELF
         t_elf64 elf64; // ELF64 data
-        t_elf32 elf32; // ELF32 data
     } elf;
 
     // Encryption
     struct
     {
         uint64_t key64;
-        uint32_t key32;
     } encryption;
 
     // State and metadata
     t_error_code error_code; // Error code for context state
     bool verbose;            // Flag to enable verbose output
+    bool scan_caves;         // If true, analyze and report code caves then exit (no injection)
 } t_woody_context;
 
 // Context utility
@@ -96,8 +97,9 @@ int validate_headers(t_woody_context *context);
 
 // ELF Injection
 int inject_elf(t_woody_context *context);
-int find_code_cave(t_woody_context *context);
 int insert_new_section(t_woody_context *context);
+void scan_code_caves(t_woody_context* context);
+int find_code_cave(t_woody_context* context);
 
 // ELF Utility
 int find_elf_segment_index_by_section(t_woody_context *context, int section_index);
@@ -108,7 +110,6 @@ void set_elf_segment_permission(t_woody_context *context, int index, int flags);
 int find_last_segment_by_type(t_woody_context *context, unsigned int type);
 int find_last_section_in_segment(t_woody_context *context, int segment_index);
 Elf64_Shdr *initialized_section_header_64(void);
-Elf32_Shdr *initialized_section_header_32(void);
 
 // Payload
 char *prepare_payload(t_woody_context *context);
@@ -127,7 +128,6 @@ void print_verbose(t_woody_context *context, const char *format, ...);
 
 // Encryption
 int encrypt_64(char *data, size_t data_size, uint64_t key);
-int encrypt_32(char *data, size_t data_size, uint32_t key);
 int encrypt_text_section(t_woody_context *context);
 
 #endif // WOODY_H

@@ -1,5 +1,12 @@
 #include "woody.h"
 
+/*
+ * Error handling helpers:
+ *  - Map t_error_code -> human-readable message
+ *  - Print errors to stderr
+ *  - Centralize cleanup + error return via handle_error()
+ */
+
 static const t_error error_table[] = {
     { SUCCESS, "No error" },
     { ERR_INVALID_ARGS, "Invalid arguments" },
@@ -31,7 +38,6 @@ static const t_error error_table[] = {
 const char* get_error_message(t_error_code code) {
     for (size_t i = 0; i < ERROR_COUNT; i++) {
         if (error_table[i].code == code) {
-            // Use perror to check if the error code is a system error
             return error_table[i].message;
         }
     }

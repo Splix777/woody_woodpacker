@@ -1,16 +1,35 @@
 #include "woody.h"
 
+/*
+ * CLI parsing and (light) argument validation.
+ *
+ * Supported flags:
+ *  -f <path>   required: input ELF path
+ *  -o <path>   optional: output path (defaults to OUTPUT_FILE_NAME)
+ *  -v          optional: verbose logs
+ *  -h          optional: help
+ *
+ * Note: is_valid_file_name() is intentionally conservative: it rejects
+ * whitespace and unusual characters so we can safely echo paths in logs.
+ */
 static int is_valid_file_name(const char* name) {
-    if (!name || strlen(name) > 255 || strlen(name) < 1) {
+    size_t len;
+
+    if (!name)
+        return ERR_INVALID_ARGS;
+
+    len = strlen(name);
+    if (len > 255 || len < 1) {
         fprintf(stderr, "%s Invalid file name length: %s\n", BOXED_CROSS,
             name ? name : "NULL");
         return ERR_INVALID_ARGS;
     }
 
-    for (size_t i = 0; i < strlen(name); i++) {
+    for (size_t i = 0; i < len; i++) {
         if (!isalnum(name[i]) && name[i] != '/' && name[i] != '.'
-            && name[i] != '_') {
-            fprintf(stderr, "%sInvalid character in file name: %s\n",
+            && name[i] != '_' && name[i] != '-' && name[i] != '+'
+            && name[i] != ':') {
+            fprintf(stderr, "%s Invalid character in file name: %s\n",
                 BOXED_CROSS, name);
             return ERR_INVALID_ARGS;
         }
@@ -20,22 +39,24 @@ static int is_valid_file_name(const char* name) {
 }
 
 static void print_help(const char* name) {
-    fprintf(stderr, "Usage: %s -f <input_file> [-o <output_file>] [-v] [-h]\n",
-        name);
+    fprintf(stderr,
+        "Usage: %s -f <input_file> [-o <output_file>] [-c] [-v] [-h]\n", name);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -f <input_file>    Input file name\n");
     fprintf(stderr, "  -o <output_file>   Output file name\n");
+    fprintf(stderr, "  -c, --scan-caves   Scan PT_LOAD segments for padding gaps and report\n");
     fprintf(stderr, "  -v                 Enable verbose output\n");
     fprintf(stderr, "  -h                 Display this help message\n");
 }
 
 int argument_parse(int argc, char** argv, t_woody_context* context) {
-    if (argc < 3 || argc > 7) {
+    if (argc < 3 || argc > 9) {
         print_help(argv[0]);
         return ERR_INVALID_ARGS;
     }
 
     context->verbose               = false;
+    context->scan_caves            = false;
     context->file.output_file_path = NULL;
 
     for (int i = 1; i < argc; i++) {
@@ -57,6 +78,9 @@ int argument_parse(int argc, char** argv, t_woody_context* context) {
             if (is_valid_file_name(argv[i + 1]) != SUCCESS)
                 return ERR_INVALID_ARGS;
             context->file.output_file_path = argv[++i];
+        } else if (strcmp(argv[i], "-c") == 0
+            || strcmp(argv[i], "--scan-caves") == 0) {
+            context->scan_caves = true;
         } else if (strcmp(argv[i], "-v") == 0) {
             context->verbose = true;
             fprintf(stderr, "%s Verbose mode enabled\n", BOXED_CHECKMARK);
@@ -65,7 +89,7 @@ int argument_parse(int argc, char** argv, t_woody_context* context) {
             return SUCCESS;
         } else {
             fprintf(
-                stderr, "%s Unknown argument: %s\n", BOXED_CHECKMARK, argv[i]);
+                stderr, "%s Unknown argument: %s\n", BOXED_CROSS, argv[i]);
             print_help(argv[0]);
             return ERR_INVALID_ARGS;
         }

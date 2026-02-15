@@ -2,6 +2,17 @@ section .text
     global encrypt_64
 
 encrypt_64:
+    ; XOR stream cipher used for both encryption and decryption.
+    ;
+    ; Calling convention (System V AMD64):
+    ;   rdi: data pointer (char *)
+    ;   rsi: size of data (size_t)
+    ;   rdx: key (uint64_t)
+    ;
+    ; Algorithm:
+    ;   for i in [0..size):
+    ;     data[i] ^= (key & 0xff)
+    ;     key = ror(key, 8)
     ; Inputs:
     ; rdi: data pointer (char *)
     ; rsi: size of data (size_t)

@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# generate_payload.sh
+#
+# Converts a raw binary blob (assembled injection stub) into a C source file
+# containing a byte array. Used by the Makefile to generate
+# src/code_to_inject/payload_64.c at build time.
+#
+# Usage:
+#   ./generate_payload.sh <input_object_file> <output_c_file> <payload_name>
+
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 <input_object_file> <output_c_file> <payload_name>"
     exit 1

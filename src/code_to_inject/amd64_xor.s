@@ -1,5 +1,18 @@
 bits 64
 
+; Loader stub injected into the output binary as the ".woody" section.
+;
+; Responsibilities:
+;  1) Preserve CPU state (registers + flags)
+;  2) Write the marker string "....WOODY....\n" to stdout
+;  3) Decrypt the encrypted region (.text) in memory using the patched key,
+;     address, and size
+;  4) Restore CPU state and jump back to the original entry point
+;
+; The C side patches:
+;  - The final jmp immediate (0xFFFFFFFF) to target the original entry point
+;  - info_key/info_addr/info_size/info_offset placeholders below
+;
 ; ===============================
 ; Push/Pop Multiple Registers Macros
 ; ===============================
@@ -69,7 +82,7 @@ loader_entry_point:
 ; ===============================
 ; Data Section
 ; ===============================
-msg db "....WOODY....", 10, 0
+msg db "....WOODY....", 10
 msg_len equ $ - msg
 
 ; ===============================

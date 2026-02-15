@@ -12,6 +12,7 @@
 - [Objectives](#objectives)
 - [General Instructions](#general-instructions)
 - [Mandatory Part](#mandatory-part)
+- [How-To (Build/Test)](#how-to-buildtest)
 - [Instructions](#instructions)
   - [Cloning the Repository](#cloning-the-repository)
   - [Using Docker](#using-docker)
@@ -64,6 +65,10 @@ The goal of `woody_woodpacker` is to:
 ### Constraints:
 - The encrypted program must not crash or alter the functionality of the original binary.
 - Files not adhering to the 64-bit ELF format should result in an error message.
+
+# How-To (Build/Test)
+
+For step-by-step build/run/verification commands, see `docs/HOWTO.md`.
 
 ### Example Use Case:
 

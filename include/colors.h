@@ -1,6 +1,13 @@
 #ifndef COLORS_H
 #define COLORS_H
 
+/*
+ * ANSI color codes + small UTF-8 symbols for terminal output.
+ *
+ * Note: these BOXED_* strings are UTF-8 byte sequences; if your terminal/font
+ * cannot render them, messages will still be readable (just uglier).
+ */
+
 // Colors
 #define RESET "\033[0m"
 #define RED "\033[31m"

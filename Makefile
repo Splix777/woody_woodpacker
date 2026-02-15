@@ -1,3 +1,9 @@
+# Makefile notes:
+#  - The injection stub (src/code_to_inject/amd64_xor.s) is assembled as a raw
+#    blob, converted into a C array (payload_64.c), then linked into the main
+#    binary. At runtime, the packer patches placeholders inside the payload.
+#  - payload_64.c is generated at build time and should not be committed.
+#
 # Binary outputs
 NAME = woody_woodpacker
 
@@ -19,11 +25,9 @@ INJECT_DIR = $(SRC_DIR)/code_to_inject
 
 # Source files
 INJECT_ASM_64 = $(INJECT_DIR)/amd64_xor.s
-INJECT_ASM_32 = $(INJECT_DIR)/i386_xor.s
 INJECT_PAYLOAD_64 = $(INJECT_DIR)/payload_64.c
-INJECT_PAYLOAD_32 = $(INJECT_DIR)/payload_32.c
-ASM_SRCS = $(filter-out $(INJECT_ASM_64) $(INJECT_ASM_32), $(shell find $(SRC_DIR) -type f -name '*.s'))
-C_SRCS = $(filter-out $(INJECT_PAYLOAD_64) $(INJECT_PAYLOAD_32), $(shell find $(SRC_DIR) -type f -name '*.c'))
+ASM_SRCS = $(filter-out $(INJECT_ASM_64), $(shell find $(SRC_DIR) -type f -name '*.s'))
+C_SRCS = $(filter-out $(INJECT_PAYLOAD_64), $(shell find $(SRC_DIR) -type f -name '*.c'))
 
 # Headers
 HEADERS = $(shell find $(INCLUDE_DIR) -type f -name '*.h')
@@ -33,12 +37,10 @@ INC = $(addprefix -I , $(INCLUDE_DIR))
 C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 ASM_OBJS = $(ASM_SRCS:$(SRC_DIR)/%.s=$(OBJ_DIR)/%.o)
 INJECT_OBJ_64 = $(OBJ_DIR)/code_to_inject/amd64_xor.o
-INJECT_OBJ_32 = $(OBJ_DIR)/code_to_inject/i386_xor.o
 PAYLOAD_OBJ_64 = $(OBJ_DIR)/code_to_inject/payload_64.o
-PAYLOAD_OBJ_32 = $(OBJ_DIR)/code_to_inject/payload_32.o
 
 # All objects combined
-ALL_OBJS = $(PAYLOAD_OBJ_64) $(PAYLOAD_OBJ_32) $(C_OBJS) $(ASM_OBJS)
+ALL_OBJS = $(PAYLOAD_OBJ_64) $(C_OBJS) $(ASM_OBJS)
 
 # Colors
 GREEN = \033[32m
@@ -71,12 +73,6 @@ $(INJECT_OBJ_64): $(INJECT_ASM_64)
 	@echo "$(GREEN)[ OK ]$(RESET)"
 	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
 
-$(INJECT_OBJ_32): $(INJECT_ASM_32)
-	@printf "Assembling %-39s" "$(notdir $<)"
-	@$(AS) -f bin -o $@ $<
-	@echo "$(GREEN)[ OK ]$(RESET)"
-	@echo "$(GREEN)Injection size: $$(wc -c < $@) bytes$(RESET)"
-
 # Generate and compile payloads
 $(PAYLOAD_OBJ_64): $(INJECT_OBJ_64)
 	@printf "Generating %-39s" "payload_64.c"
@@ -84,14 +80,6 @@ $(PAYLOAD_OBJ_64): $(INJECT_OBJ_64)
 	@echo "$(GREEN)[ OK ]$(RESET)"
 	@printf "Compiling %-40s" "payload_64.c"
 	@$(CC) $(CFLAGS) $(INC) -c $(INJECT_PAYLOAD_64) -o $@
-	@echo "$(GREEN)[ OK ]$(RESET)"
-
-$(PAYLOAD_OBJ_32): $(INJECT_OBJ_32)
-	@printf "Generating %-39s" "payload_32.c"
-	@./generate_payload.sh $< $(INJECT_PAYLOAD_32) INJECTION_PAYLOAD_32
-	@echo "$(GREEN)[ OK ]$(RESET)"
-	@printf "Compiling %-40s" "payload_32.c"
-	@$(CC) $(CFLAGS) $(INC) -c $(INJECT_PAYLOAD_32) -o $@
 	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Compile C source files
@@ -135,7 +123,7 @@ dclean:
 clean:
 	@printf "Cleaning objects... %-2s"
 	@rm -rf $(OBJ_DIR)
-	@rm -f $(INJECT_PAYLOAD_64) $(INJECT_PAYLOAD_32)
+	@rm -f $(INJECT_PAYLOAD_64)
 	@echo "$(GREEN)[ OK ]$(RESET)"
 
 # Clean everything
@@ -153,11 +141,8 @@ debug: CFLAGS += -g3 -DDEBUG
 debug: re
 
 # Utility targets
-dump: $(INJECT_OBJ_64) $(INJECT_OBJ_32)
+dump: $(INJECT_OBJ_64)
 	@echo "Hexdump of 64-bit injection code:"
 	@hexdump -C $(INJECT_OBJ_64)
-	@echo
-	@echo "Hexdump of 32-bit injection code:"
-	@hexdump -C $(INJECT_OBJ_32)
 
 .PHONY: all clean fclean re debug dump build up down exec dclean
